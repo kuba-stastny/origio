@@ -1,0 +1,1122 @@
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+} from "recharts";
+import { 
+  Droplets,
+  Plus,
+  Utensils,
+  Trash2,
+  Sparkles,
+  Flame,
+  Apple,
+  Activity,
+  CupSoda,
+} from "lucide-react";
+
+/**
+ * Meal & Water Tracker (no backend)
+ * - Glassmorphism UI
+ * - LocalStorage persistence
+ * - Daily meals + hydration
+ * - Charts + stats
+ */
+
+type MealType = "Breakfast" | "Lunch" | "Dinner" | "Snack";
+
+type MealEntry = {
+  id: string;
+  date: string; // YYYY-MM-DD
+  time: string; // HH:mm
+  type: MealType;
+  name: string;
+  calories?: number;
+  protein?: number;
+  carbs?: number;
+  fat?: number;
+};
+
+type WaterEntry = {
+  id: string;
+  date: string; // YYYY-MM-DD
+  time: string; // HH:mm
+  ml: number;
+};
+
+type Profile = {
+  dailyCalTarget: number;
+  dailyWaterTargetMl: number;
+};
+
+const LS_KEY = "glass_meal_water_v1";
+
+type Persisted = {
+  profile: Profile;
+  meals: MealEntry[];
+  water: WaterEntry[];
+};
+
+function uid() {
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
+
+function pad2(n: number) {
+  return String(n).padStart(2, "0");
+}
+
+function todayISO(d = new Date()) {
+  const y = d.getFullYear();
+  const m = pad2(d.getMonth() + 1);
+  const day = pad2(d.getDate());
+  return `${y}-${m}-${day}`;
+}
+
+function nowTime(d = new Date()) {
+  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+
+function addDaysISO(iso: string, delta: number) {
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(y, m - 1, d);
+  dt.setDate(dt.getDate() + delta);
+  return todayISO(dt);
+}
+
+function formatNiceDate(iso: string) {
+  const [y, m, d] = iso.split("-");
+  return `${d}.${m}.${y}`;
+}
+
+function clamp(n: number, a: number, b: number) {
+  return Math.max(a, Math.min(b, n));
+}
+
+const MEAL_TYPES: MealType[] = ["Breakfast", "Lunch", "Dinner", "Snack"];
+
+const DEFAULT: Persisted = {
+  profile: {
+    dailyCalTarget: 2200,
+    dailyWaterTargetMl: 2500,
+  },
+  meals: [],
+  water: [],
+};
+
+function load(): Persisted {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return DEFAULT;
+    const parsed = JSON.parse(raw) as Persisted;
+    return {
+      profile: parsed.profile ?? DEFAULT.profile,
+      meals: Array.isArray(parsed.meals) ? parsed.meals : [],
+      water: Array.isArray(parsed.water) ? parsed.water : [],
+    };
+  } catch {
+    return DEFAULT;
+  }
+}
+
+function save(data: Persisted) {
+  localStorage.setItem(LS_KEY, JSON.stringify(data));
+}
+
+function sum(nums: Array<number | undefined>) {
+  return nums.reduce((acc, v) => acc + (Number.isFinite(v) ? (v as number) : 0), 0);
+}
+
+function pct(value: number, target: number) {
+  if (!target) return 0;
+  return clamp((value / target) * 100, 0, 999);
+}
+
+function GlassCard({
+  title,
+  icon,
+  children,
+  className = "",
+}: {
+  title?: string;
+  icon?: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={
+        "relative rounded-3xl border border-white/15 bg-white/10 backdrop-blur-xl shadow-[0_20px_70px_-30px_rgba(0,0,0,0.7)] " +
+        "ring-1 ring-white/10 overflow-hidden " +
+        className
+      }
+    >
+      <div className="pointer-events-none absolute inset-0 opacity-70">
+        <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
+        <div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
+      </div>
+      {(title || icon) && (
+        <div className="relative z-10 flex items-center gap-3 px-5 pt-5">
+          {icon && (
+            <div className="grid h-10 w-10 place-items-center rounded-2xl bg-white/10 border border-white/10">
+              {icon}
+            </div>
+          )}
+          {title && (
+            <div>
+              <div className="text-sm text-white/60">Overview</div>
+              <div className="text-lg font-semibold tracking-tight text-white">
+                {title}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+      <div className="relative z-10 p-5">{children}</div>
+    </div>
+  );
+}
+
+function Pill({
+  label,
+  value,
+  tone = "neutral",
+}: {
+  label: string;
+  value: string;
+  tone?: "neutral" | "good" | "warn";
+}) {
+  const toneCls =
+    tone === "good"
+      ? "bg-emerald-400/10 border-emerald-300/20 text-emerald-100"
+      : tone === "warn"
+        ? "bg-amber-400/10 border-amber-300/20 text-amber-100"
+        : "bg-white/10 border-white/15 text-white/90";
+  return (
+    <div className={`inline-flex items-center gap-2 rounded-2xl border px-3 py-2 ${toneCls}`}>
+      <div className="text-xs text-white/60">{label}</div>
+      <div className="text-sm font-semibold">{value}</div>
+    </div>
+  );
+}
+
+function ProgressRing({
+  value,
+  label,
+  sublabel,
+}: {
+  value: number; // 0..100
+  label: string;
+  sublabel: string;
+}) {
+  // SVG ring
+  const size = 96;
+  const stroke = 10;
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const v = clamp(value, 0, 100);
+  const dash = (v / 100) * c;
+  const gap = c - dash;
+
+  return (
+    <div className="flex items-center gap-4">
+      <svg width={size} height={size} className="shrink-0">
+        <defs>
+          <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="rgba(255,255,255,0.95)" />
+            <stop offset="100%" stopColor="rgba(255,255,255,0.25)" />
+          </linearGradient>
+        </defs>
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          stroke="rgba(255,255,255,0.15)"
+          strokeWidth={stroke}
+          fill="transparent"
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          stroke="url(#ring)"
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          fill="transparent"
+          strokeDasharray={`${dash} ${gap}`}
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+        />
+        <text
+          x="50%"
+          y="50%"
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fill="rgba(255,255,255,0.9)"
+          fontSize="18"
+          fontWeight="700"
+        >
+          {Math.round(v)}%
+        </text>
+      </svg>
+      <div>
+        <div className="text-white font-semibold leading-tight">{label}</div>
+        <div className="text-sm text-white/60">{sublabel}</div>
+      </div>
+    </div>
+  );
+}
+
+function Input({
+  label,
+  value,
+  onChange,
+  type = "text",
+  placeholder,
+  min,
+  step,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  type?: string;
+  placeholder?: string;
+  min?: number;
+  step?: number;
+}) {
+  return (
+    <label className="block">
+      <div className="mb-2 text-xs font-medium text-white/70">{label}</div>
+      <input
+        type={type}
+        value={value}
+        min={min}
+        step={step}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-white placeholder:text-white/35 outline-none backdrop-blur-xl focus:border-white/25"
+      />
+    </label>
+  );
+}
+
+function Select({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: Array<{ label: string; value: string }>;
+}) {
+  return (
+    <label className="block">
+      <div className="mb-2 text-xs font-medium text-white/70">{label}</div>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-white outline-none backdrop-blur-xl focus:border-white/25"
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value} className="text-black">
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function Button({
+  children,
+  onClick,
+  variant = "primary",
+  className = "",
+  disabled,
+  type,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  variant?: "primary" | "ghost" | "danger";
+  className?: string;
+  disabled?: boolean;
+  type?: "button" | "submit";
+}) {
+  const base =
+    "inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold transition active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed";
+  const v =
+    variant === "primary"
+      ? "bg-white text-black hover:bg-white/90"
+      : variant === "danger"
+        ? "bg-rose-500/90 text-white hover:bg-rose-500"
+        : "bg-white/10 text-white border border-white/15 hover:bg-white/15";
+  return (
+    <button type={type ?? "button"} disabled={disabled} onClick={onClick} className={`${base} ${v} ${className}`}>
+      {children}
+    </button>
+  );
+}
+
+function MiniRow({
+  left,
+  right,
+}: {
+  left: React.ReactNode;
+  right: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+      <div className="min-w-0">{left}</div>
+      <div className="shrink-0">{right}</div>
+    </div>
+  );
+}
+
+function EmptyState({
+  icon,
+  title,
+  desc,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+}) {
+  return (
+    <div className="grid place-items-center rounded-3xl border border-white/10 bg-white/5 p-8 text-center">
+      <div className="mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-white/10 border border-white/10">
+        {icon}
+      </div>
+      <div className="text-white font-semibold">{title}</div>
+      <div className="mt-1 text-sm text-white/60 max-w-sm">{desc}</div>
+    </div>
+  );
+}
+
+export default function App() {
+  const [hydrated, setHydrated] = useState(false);
+  const [profile, setProfile] = useState<Profile>(DEFAULT.profile);
+  const [meals, setMeals] = useState<MealEntry[]>([]);
+  const [water, setWater] = useState<WaterEntry[]>([]);
+
+  const [activeDate, setActiveDate] = useState<string>(todayISO());
+  const [tab, setTab] = useState<"Today" | "Trends" | "Settings">("Today");
+
+  // Meal form
+  const [mType, setMType] = useState<MealType>("Lunch");
+  const [mName, setMName] = useState<string>("");
+  const [mCalories, setMCalories] = useState<string>("");
+  const [mProtein, setMProtein] = useState<string>("");
+  const [mCarbs, setMCarbs] = useState<string>("");
+  const [mFat, setMFat] = useState<string>("");
+
+  // Water form
+  const [wMl, setWMl] = useState<string>("250");
+
+  useEffect(() => {
+    const d = load();
+    setProfile(d.profile);
+    setMeals(d.meals);
+    setWater(d.water);
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    save({ profile, meals, water });
+  }, [profile, meals, water, hydrated]);
+
+  const todaysMeals = useMemo(
+    () => meals.filter((m) => m.date === activeDate).sort((a, b) => (a.time > b.time ? 1 : -1)),
+    [meals, activeDate]
+  );
+
+  const todaysWater = useMemo(
+    () => water.filter((w) => w.date === activeDate).sort((a, b) => (a.time > b.time ? 1 : -1)),
+    [water, activeDate]
+  );
+
+  const todayTotals = useMemo(() => {
+    const cal = sum(todaysMeals.map((m) => m.calories));
+    const p = sum(todaysMeals.map((m) => m.protein));
+    const c = sum(todaysMeals.map((m) => m.carbs));
+    const f = sum(todaysMeals.map((m) => m.fat));
+    const waterMl = sum(todaysWater.map((w) => w.ml));
+    return { cal, p, c, f, waterMl };
+  }, [todaysMeals, todaysWater]);
+
+  const calPct = useMemo(() => pct(todayTotals.cal, profile.dailyCalTarget), [todayTotals.cal, profile.dailyCalTarget]);
+  const waterPct = useMemo(() => pct(todayTotals.waterMl, profile.dailyWaterTargetMl), [todayTotals.waterMl, profile.dailyWaterTargetMl]);
+
+  const last7 = useMemo(() => {
+    const days = Array.from({ length: 7 }).map((_, i) => addDaysISO(activeDate, -6 + i));
+    return days.map((d) => {
+      const dm = meals.filter((m) => m.date === d);
+      const dw = water.filter((w) => w.date === d);
+      const cal = sum(dm.map((m) => m.calories));
+      const waterMl = sum(dw.map((w) => w.ml));
+      const protein = sum(dm.map((m) => m.protein));
+      return {
+        date: d,
+        day: d.slice(5),
+        calories: Math.round(cal),
+        waterMl: Math.round(waterMl),
+        protein: Math.round(protein),
+      };
+    });
+  }, [meals, water, activeDate]);
+
+  const macroBreakdown = useMemo(() => {
+    // Use grams -> calories estimate for a simple macro chart (P=4kcal/g, C=4, F=9)
+    const p = todayTotals.p;
+    const c = todayTotals.c;
+    const f = todayTotals.f;
+    const pCal = p * 4;
+    const cCal = c * 4;
+    const fCal = f * 9;
+    const total = pCal + cCal + fCal;
+    const safeTotal = total || 1;
+    return [
+      { name: "Protein", grams: p, kcal: pCal, share: Math.round((pCal / safeTotal) * 100) },
+      { name: "Carbs", grams: c, kcal: cCal, share: Math.round((cCal / safeTotal) * 100) },
+      { name: "Fat", grams: f, kcal: fCal, share: Math.round((fCal / safeTotal) * 100) },
+    ];
+  }, [todayTotals.p, todayTotals.c, todayTotals.f]);
+
+  function resetDemo() {
+    const base = todayISO();
+    const demoMeals: MealEntry[] = [
+      { id: uid(), date: base, time: "08:10", type: "Breakfast", name: "Greek yogurt + berries", calories: 420, protein: 28, carbs: 45, fat: 14 },
+      { id: uid(), date: base, time: "12:40", type: "Lunch", name: "Chicken bowl", calories: 680, protein: 48, carbs: 70, fat: 18 },
+      { id: uid(), date: base, time: "18:55", type: "Dinner", name: "Salmon + rice", calories: 650, protein: 42, carbs: 60, fat: 22 },
+      { id: uid(), date: addDaysISO(base, -1), time: "12:30", type: "Lunch", name: "Pasta", calories: 780, protein: 26, carbs: 110, fat: 20 },
+      { id: uid(), date: addDaysISO(base, -2), time: "19:00", type: "Dinner", name: "Tacos", calories: 860, protein: 35, carbs: 95, fat: 32 },
+      { id: uid(), date: addDaysISO(base, -3), time: "08:00", type: "Breakfast", name: "Oats + banana", calories: 510, protein: 18, carbs: 82, fat: 12 },
+      { id: uid(), date: addDaysISO(base, -4), time: "13:10", type: "Lunch", name: "Beef + potatoes", calories: 720, protein: 40, carbs: 62, fat: 24 },
+      { id: uid(), date: addDaysISO(base, -5), time: "20:15", type: "Dinner", name: "Sushi", calories: 640, protein: 28, carbs: 88, fat: 12 },
+    ];
+
+    const demoWater: WaterEntry[] = [];
+    for (let i = 0; i < 7; i++) {
+      const d = addDaysISO(base, -i);
+      const total = 1400 + Math.round(Math.random() * 1600);
+      let left = total;
+      const times = ["08:30", "10:45", "13:20", "15:40", "18:10", "21:00"];
+      for (const t of times) {
+        if (left <= 0) break;
+        const portion = Math.min(left, 200 + Math.round(Math.random() * 300));
+        left -= portion;
+        demoWater.push({ id: uid(), date: d, time: t, ml: portion });
+      }
+    }
+
+    setProfile({ dailyCalTarget: 2200, dailyWaterTargetMl: 2500 });
+    setMeals(demoMeals);
+    setWater(demoWater);
+    setActiveDate(base);
+  }
+
+  function addMeal() {
+    const name = mName.trim();
+    if (!name) return;
+
+    const entry: MealEntry = {
+      id: uid(),
+      date: activeDate,
+      time: nowTime(),
+      type: mType,
+      name,
+      calories: mCalories.trim() ? Number(mCalories) : undefined,
+      protein: mProtein.trim() ? Number(mProtein) : undefined,
+      carbs: mCarbs.trim() ? Number(mCarbs) : undefined,
+      fat: mFat.trim() ? Number(mFat) : undefined,
+    };
+
+    setMeals((prev) => [entry, ...prev]);
+    setMName("");
+    // keep macros for faster entry
+  }
+
+  function addWater(ml: number) {
+    const entry: WaterEntry = {
+      id: uid(),
+      date: activeDate,
+      time: nowTime(),
+      ml,
+    };
+    setWater((prev) => [entry, ...prev]);
+  }
+
+  function removeMeal(id: string) {
+    setMeals((prev) => prev.filter((m) => m.id !== id));
+  }
+
+  function removeWater(id: string) {
+    setWater((prev) => prev.filter((w) => w.id !== id));
+  }
+
+  function clearAll() {
+    setMeals([]);
+    setWater([]);
+  }
+
+  const topGradient =
+    "radial-gradient(1200px 700px at 20% 10%, rgba(255,255,255,0.22), transparent 55%)," +
+    "radial-gradient(900px 600px at 80% 20%, rgba(255,255,255,0.12), transparent 55%)," +
+    "radial-gradient(900px 700px at 50% 90%, rgba(255,255,255,0.10), transparent 60%)," +
+    "linear-gradient(180deg, rgba(10,10,12,1), rgba(7,7,10,1))";
+
+  return (
+    <div className="min-h-screen text-white" style={{ background: topGradient }}>
+      {/* Subtle noise */}
+      <div
+        className="pointer-events-none fixed inset-0 opacity-[0.10] mix-blend-overlay"
+        style={{
+          backgroundImage:
+            "url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22160%22 height=%22160%22%3E%3Cfilter id=%22n%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.8%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22160%22 height=%22160%22 filter=%22url(%23n)%22 opacity=%220.6%22/%3E%3C/svg%3E')",
+        }}
+      />
+
+      <div className="mx-auto max-w-6xl px-4 py-10">
+        {/* Header */}
+        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/70">
+              <Sparkles className="h-4 w-4" />
+              Glass Meal & Water Tracker
+            </div>
+            <h1 className="mt-4 text-4xl font-semibold tracking-tight">
+              Your day, in one clean dashboard
+            </h1>
+            <p className="mt-2 text-white/60 max-w-2xl">
+              Track meals and hydration with a modern glass UI, rich charts and stats —
+              stored locally in your browser.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-2">
+              <div className="flex items-center gap-2">
+                <button
+                  className="rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15"
+                  onClick={() => setActiveDate(addDaysISO(activeDate, -1))}
+                >
+                  ←
+                </button>
+                <div className="px-2">
+                  <div className="text-xs text-white/60">Selected day</div>
+                  <div className="text-sm font-semibold">{formatNiceDate(activeDate)}</div>
+                </div>
+                <button
+                  className="rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-sm hover:bg-white/15"
+                  onClick={() => setActiveDate(addDaysISO(activeDate, 1))}
+                >
+                  →
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2">
+              {(["Today", "Trends", "Settings"] as const).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setTab(t)}
+                  className={
+                    "rounded-xl px-3 py-2 text-sm font-semibold transition " +
+                    (tab === t
+                      ? "bg-white text-black"
+                      : "bg-white/0 text-white/80 hover:bg-white/10")
+                  }
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+
+            <Button variant="ghost" onClick={resetDemo}>
+              <Sparkles className="h-4 w-4" /> Demo data
+            </Button>
+          </div>
+        </div>
+
+        {/* Content */}
+        {tab === "Today" && (
+          <div className="grid gap-6 md:grid-cols-12">
+            {/* Left: Summary */}
+            <div className="md:col-span-5 space-y-6">
+              <GlassCard
+                title="Daily progress"
+                icon={<Activity className="h-5 w-5 text-white/90" />}
+              >
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                    <ProgressRing
+                      value={calPct}
+                      label="Calories"
+                      sublabel={`${Math.round(todayTotals.cal)} / ${profile.dailyCalTarget} kcal`}
+                    />
+                  </div>
+                  <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                    <ProgressRing
+                      value={waterPct}
+                      label="Hydration"
+                      sublabel={`${Math.round(todayTotals.waterMl)} / ${profile.dailyWaterTargetMl} ml`}
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-5 flex flex-wrap gap-2">
+                  <Pill label="Protein" value={`${Math.round(todayTotals.p)} g`} tone={todayTotals.p >= 100 ? "good" : "neutral"} />
+                  <Pill label="Carbs" value={`${Math.round(todayTotals.c)} g`} />
+                  <Pill label="Fat" value={`${Math.round(todayTotals.f)} g`} />
+                  <Pill
+                    label="Meals"
+                    value={`${todaysMeals.length}`}
+                    tone={todaysMeals.length >= 3 ? "good" : "warn"}
+                  />
+                  <Pill
+                    label="Water logs"
+                    value={`${todaysWater.length}`}
+                    tone={todaysWater.length >= 5 ? "good" : "neutral"}
+                  />
+                </div>
+
+                <div className="mt-6 grid gap-4">
+                  <div className="text-sm font-semibold text-white">Macro split (estimated kcal)</div>
+                  <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                    <ResponsiveContainer width="100%" height={170}>
+                      <BarChart data={macroBreakdown} barCategoryGap={14}>
+                        <CartesianGrid stroke="rgba(255,255,255,0.08)" vertical={false} />
+                        <XAxis dataKey="name" stroke="rgba(255,255,255,0.5)" />
+                        <YAxis stroke="rgba(255,255,255,0.5)" />
+                        <Tooltip
+                          contentStyle={{
+                            background: "rgba(10,10,12,0.85)",
+                            border: "1px solid rgba(255,255,255,0.12)",
+                            borderRadius: 16,
+                            color: "white",
+                            backdropFilter: "blur(14px)",
+                          }}
+                          labelStyle={{ color: "rgba(255,255,255,0.7)" }}
+                        />
+                        <Bar dataKey="kcal" radius={[16, 16, 10, 10]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                    <div className="mt-3 grid grid-cols-3 gap-2 text-xs text-white/70">
+                      {macroBreakdown.map((m) => (
+                        <div key={m.name} className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                          <div className="font-semibold text-white">{m.name}</div>
+                          <div className="mt-1">{Math.round(m.grams)} g</div>
+                          <div className="mt-1 text-white/50">{m.share}%</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 flex flex-wrap gap-2">
+                  <Button variant="ghost" onClick={clearAll}>
+                    <Trash2 className="h-4 w-4" /> Clear day logs
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      setActiveDate(todayISO());
+                      setTab("Today");
+                    }}
+                  >
+                    <Sparkles className="h-4 w-4" /> Jump to today
+                  </Button>
+                </div>
+              </GlassCard>
+
+              <GlassCard
+                title="Quick water"
+                icon={<Droplets className="h-5 w-5 text-white/90" />}
+              >
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Button variant="primary" onClick={() => addWater(250)} className="justify-start">
+                    <CupSoda className="h-4 w-4" /> +250 ml
+                  </Button>
+                  <Button variant="ghost" onClick={() => addWater(500)} className="justify-start">
+                    <CupSoda className="h-4 w-4" /> +500 ml
+                  </Button>
+                  <div className="sm:col-span-2 grid grid-cols-[1fr_auto] gap-2">
+                    <Input label="Custom ml" value={wMl} onChange={setWMl} type="number" min={10} step={10} />
+                    <div className="self-end">
+                      <Button
+                        variant="primary"
+                        onClick={() => {
+                          const ml = Number(wMl);
+                          if (!Number.isFinite(ml) || ml <= 0) return;
+                          addWater(ml);
+                        }}
+                      >
+                        <Plus className="h-4 w-4" /> Add
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-5 space-y-2">
+                  {todaysWater.length === 0 ? (
+                    <EmptyState
+                      icon={<Droplets className="h-5 w-5" />}
+                      title="No water logged yet"
+                      desc="Tap a quick button above or add a custom amount."
+                    />
+                  ) : (
+                    todaysWater.map((w) => (
+                      <MiniRow
+                        key={w.id}
+                        left={
+                          <div className="min-w-0">
+                            <div className="text-sm font-semibold text-white truncate">{w.ml} ml</div>
+                            <div className="text-xs text-white/60">{w.time}</div>
+                          </div>
+                        }
+                        right={
+                          <button
+                            onClick={() => removeWater(w.id)}
+                            className="rounded-xl border border-white/10 bg-white/5 p-2 hover:bg-white/10"
+                            aria-label="Remove water"
+                          >
+                            <Trash2 className="h-4 w-4 text-white/70" />
+                          </button>
+                        }
+                      />
+                    ))
+                  )}
+                </div>
+              </GlassCard>
+            </div>
+
+            {/* Right: Meal entry + lists */}
+            <div className="md:col-span-7 space-y-6">
+              <GlassCard
+                title="Add meal"
+                icon={<Utensils className="h-5 w-5 text-white/90" />}
+              >
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Select
+                    label="Type"
+                    value={mType}
+                    onChange={(v) => setMType(v as MealType)}
+                    options={MEAL_TYPES.map((t) => ({ label: t, value: t }))}
+                  />
+                  <Input
+                    label="Meal name"
+                    value={mName}
+                    onChange={setMName}
+                    placeholder="e.g. Chicken bowl"
+                  />
+                  <Input label="Calories (kcal)" value={mCalories} onChange={setMCalories} type="number" min={0} step={10} />
+                  <div className="grid grid-cols-3 gap-3">
+                    <Input label="Protein (g)" value={mProtein} onChange={setMProtein} type="number" min={0} step={1} />
+                    <Input label="Carbs (g)" value={mCarbs} onChange={setMCarbs} type="number" min={0} step={1} />
+                    <Input label="Fat (g)" value={mFat} onChange={setMFat} type="number" min={0} step={1} />
+                  </div>
+                </div>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Button variant="primary" onClick={addMeal} disabled={!mName.trim()}>
+                    <Plus className="h-4 w-4" /> Add meal
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      setMCalories("");
+                      setMProtein("");
+                      setMCarbs("");
+                      setMFat("");
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" /> Clear macros
+                  </Button>
+                </div>
+
+                <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                  <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                    <div className="flex items-center gap-2 text-white/80">
+                      <Flame className="h-4 w-4" />
+                      <div className="text-xs">Calories</div>
+                    </div>
+                    <div className="mt-2 text-2xl font-semibold">{Math.round(todayTotals.cal)}</div>
+                    <div className="mt-1 text-xs text-white/55">Target {profile.dailyCalTarget}</div>
+                  </div>
+                  <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                    <div className="flex items-center gap-2 text-white/80">
+                      <Apple className="h-4 w-4" />
+                      <div className="text-xs">Protein</div>
+                    </div>
+                    <div className="mt-2 text-2xl font-semibold">{Math.round(todayTotals.p)}g</div>
+                    <div className="mt-1 text-xs text-white/55">Macro tracking</div>
+                  </div>
+                  <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                    <div className="flex items-center gap-2 text-white/80">
+                      <Droplets className="h-4 w-4" />
+                      <div className="text-xs">Water</div>
+                    </div>
+                    <div className="mt-2 text-2xl font-semibold">{Math.round(todayTotals.waterMl)}ml</div>
+                    <div className="mt-1 text-xs text-white/55">Target {profile.dailyWaterTargetMl}ml</div>
+                  </div>
+                </div>
+              </GlassCard>
+
+              <GlassCard title="Today's meals" icon={<Utensils className="h-5 w-5 text-white/90" />}>
+                <div className="space-y-2">
+                  {todaysMeals.length === 0 ? (
+                    <EmptyState
+                      icon={<Utensils className="h-5 w-5" />}
+                      title="No meals logged yet"
+                      desc="Add your first meal above. Pro tip: keep macros blank if you just want calories." 
+                    />
+                  ) : (
+                    todaysMeals.map((m) => (
+                      <MiniRow
+                        key={m.id}
+                        left={
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="inline-flex rounded-xl border border-white/10 bg-white/10 px-2 py-1 text-[11px] text-white/80">
+                                {m.type}
+                              </span>
+                              <div className="truncate text-sm font-semibold text-white">{m.name}</div>
+                            </div>
+                            <div className="mt-1 text-xs text-white/60">
+                              {m.time}
+                              {typeof m.calories === "number" ? ` · ${m.calories} kcal` : ""}
+                              {typeof m.protein === "number" ? ` · P ${m.protein}g` : ""}
+                              {typeof m.carbs === "number" ? ` · C ${m.carbs}g` : ""}
+                              {typeof m.fat === "number" ? ` · F ${m.fat}g` : ""}
+                            </div>
+                          </div>
+                        }
+                        right={
+                          <button
+                            onClick={() => removeMeal(m.id)}
+                            className="rounded-xl border border-white/10 bg-white/5 p-2 hover:bg-white/10"
+                            aria-label="Remove meal"
+                          >
+                            <Trash2 className="h-4 w-4 text-white/70" />
+                          </button>
+                        }
+                      />
+                    ))
+                  )}
+                </div>
+              </GlassCard>
+            </div>
+          </div>
+        )}
+
+        {tab === "Trends" && (
+          <div className="grid gap-6 md:grid-cols-12">
+            <div className="md:col-span-12">
+              <GlassCard title="Last 7 days" icon={<Activity className="h-5 w-5 text-white/90" />}>
+                <div className="grid gap-6 md:grid-cols-12">
+                  <div className="md:col-span-8 rounded-3xl border border-white/10 bg-white/5 p-4">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <div>
+                        <div className="text-sm font-semibold">Calories trend</div>
+                        <div className="text-xs text-white/60">Daily totals</div>
+                      </div>
+                      <Pill label="Avg" value={`${Math.round(sum(last7.map((d) => d.calories)) / 7)} kcal`} />
+                    </div>
+                    <ResponsiveContainer width="100%" height={260}>
+                      <LineChart data={last7}>
+                        <CartesianGrid stroke="rgba(255,255,255,0.08)" vertical={false} />
+                        <XAxis dataKey="day" stroke="rgba(255,255,255,0.5)" />
+                        <YAxis stroke="rgba(255,255,255,0.5)" />
+                        <Tooltip
+                          contentStyle={{
+                            background: "rgba(10,10,12,0.85)",
+                            border: "1px solid rgba(255,255,255,0.12)",
+                            borderRadius: 16,
+                            color: "white",
+                            backdropFilter: "blur(14px)",
+                          }}
+                          labelStyle={{ color: "rgba(255,255,255,0.7)" }}
+                        />
+                        <Line type="monotone" dataKey="calories" stroke="rgba(255,255,255,0.9)" strokeWidth={3} dot={false} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  <div className="md:col-span-4 rounded-3xl border border-white/10 bg-white/5 p-4">
+                    <div className="mb-3">
+                      <div className="text-sm font-semibold">Hydration</div>
+                      <div className="text-xs text-white/60">Water per day</div>
+                    </div>
+                    <ResponsiveContainer width="100%" height={260}>
+                      <BarChart data={last7} barCategoryGap={12}>
+                        <CartesianGrid stroke="rgba(255,255,255,0.08)" vertical={false} />
+                        <XAxis dataKey="day" stroke="rgba(255,255,255,0.5)" />
+                        <YAxis stroke="rgba(255,255,255,0.5)" />
+                        <Tooltip
+                          contentStyle={{
+                            background: "rgba(10,10,12,0.85)",
+                            border: "1px solid rgba(255,255,255,0.12)",
+                            borderRadius: 16,
+                            color: "white",
+                            backdropFilter: "blur(14px)",
+                          }}
+                          labelStyle={{ color: "rgba(255,255,255,0.7)" }}
+                        />
+                        <Bar dataKey="waterMl" radius={[16, 16, 10, 10]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Pill
+                        label="Avg"
+                        value={`${Math.round(sum(last7.map((d) => d.waterMl)) / 7)} ml`}
+                        tone={Math.round(sum(last7.map((d) => d.waterMl)) / 7) >= profile.dailyWaterTargetMl ? "good" : "neutral"}
+                      />
+                      <Pill label="Target" value={`${profile.dailyWaterTargetMl} ml`} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 grid gap-3 md:grid-cols-3">
+                  <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                    <div className="text-xs text-white/60">Highest calorie day</div>
+                    <div className="mt-2 text-lg font-semibold">
+                      {(() => {
+                        const max = [...last7].sort((a, b) => b.calories - a.calories)[0];
+                        return max ? `${max.day} · ${max.calories} kcal` : "—";
+                      })()}
+                    </div>
+                  </div>
+                  <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                    <div className="text-xs text-white/60">Best hydration day</div>
+                    <div className="mt-2 text-lg font-semibold">
+                      {(() => {
+                        const max = [...last7].sort((a, b) => b.waterMl - a.waterMl)[0];
+                        return max ? `${max.day} · ${max.waterMl} ml` : "—";
+                      })()}
+                    </div>
+                  </div>
+                  <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                    <div className="text-xs text-white/60">Protein (avg)</div>
+                    <div className="mt-2 text-lg font-semibold">
+                      {Math.round(sum(last7.map((d) => d.protein)) / 7)} g/day
+                    </div>
+                  </div>
+                </div>
+              </GlassCard>
+            </div>
+          </div>
+        )}
+
+        {tab === "Settings" && (
+          <div className="grid gap-6 md:grid-cols-12">
+            <div className="md:col-span-7 space-y-6">
+              <GlassCard title="Goals" icon={<Sparkles className="h-5 w-5 text-white/90" />}>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Input
+                    label="Daily calories target"
+                    value={String(profile.dailyCalTarget)}
+                    onChange={(v) =>
+                      setProfile((p) => ({
+                        ...p,
+                        dailyCalTarget: clamp(Number(v || 0), 0, 20000),
+                      }))
+                    }
+                    type="number"
+                    min={0}
+                    step={10}
+                  />
+                  <Input
+                    label="Daily water target (ml)"
+                    value={String(profile.dailyWaterTargetMl)}
+                    onChange={(v) =>
+                      setProfile((p) => ({
+                        ...p,
+                        dailyWaterTargetMl: clamp(Number(v || 0), 0, 20000),
+                      }))
+                    }
+                    type="number"
+                    min={0}
+                    step={50}
+                  />
+                </div>
+                <div className="mt-4 text-sm text-white/60">
+                  Tip: This app stores data only in your browser (localStorage). No account needed.
+                </div>
+              </GlassCard>
+
+              <GlassCard title="Data" icon={<Trash2 className="h-5 w-5 text-white/90" />}>
+                <div className="grid gap-3">
+                  <Button variant="ghost" onClick={resetDemo}>
+                    <Sparkles className="h-4 w-4" /> Load demo again
+                  </Button>
+                  <Button
+                    variant="danger"
+                    onClick={() => {
+                      localStorage.removeItem(LS_KEY);
+                      setProfile(DEFAULT.profile);
+                      setMeals([]);
+                      setWater([]);
+                      setActiveDate(todayISO());
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" /> Wipe all local data
+                  </Button>
+                  <div className="text-xs text-white/55">
+                    Wipe will remove meals and water logs stored in this browser.
+                  </div>
+                </div>
+              </GlassCard>
+            </div>
+
+            <div className="md:col-span-5 space-y-6">
+              <GlassCard title="About" icon={<Sparkles className="h-5 w-5 text-white/90" />}>
+                <div className="space-y-4 text-sm text-white/70">
+                  <p>
+                    This is a single-page, no-backend tracker with a glassmorphism dashboard,
+                    charts and daily stats.
+                  </p>
+                  <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                    <div className="text-white font-semibold">Quick ideas to extend</div>
+                    <ul className="mt-2 list-disc pl-5 text-white/65 space-y-1">
+                      <li>Meal templates (favorite meals)</li>
+                      <li>Weekly plan (meal planner)</li>
+                      <li>Reminders / PWA notifications</li>
+                      <li>Photo uploads (still local-only)</li>
+                    </ul>
+                  </div>
+                </div>
+              </GlassCard>
+
+              <GlassCard title="Shortcuts" icon={<Sparkles className="h-5 w-5 text-white/90" />}>
+                <div className="grid gap-3">
+                  <Button variant="primary" onClick={() => setTab("Today")}>
+                    <Activity className="h-4 w-4" /> Go to dashboard
+                  </Button>
+                  <Button variant="ghost" onClick={() => setTab("Trends")}>
+                    <Activity className="h-4 w-4" /> View trends
+                  </Button>
+                </div>
+              </GlassCard>
+            </div>
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="mt-10 flex flex-col gap-2 items-center text-xs text-white/45">
+          <div className="inline-flex items-center gap-2">
+            <Sparkles className="h-4 w-4" />
+            Built for fast daily use — no login, no backend.
+          </div>
+          <div className="text-white/35">Tip: open Settings → Load demo if you want instant charts.</div>
+        </div>
+      </div>
+    </div>
+  );
+}

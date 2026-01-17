@@ -1,0 +1,294 @@
+ORIGIO – KOMPLETNÍ POSTUP NASAZENÍ
+Hostinger VPS (KVM) + Debian + Next.js (standalone)
+
+==================================================
+
+CÍL
+
+vlastní VPS (Hostinger)
+
+Debian
+
+Next.js aplikace v režimu standalone
+
+deploy přes rsync + PM2
+
+doména: https://app.origio.site
+
+HTTPS (Let’s Encrypt)
+
+připraveno i pro *.origio.site
+
+==================================================
+
+VYTVOŘENÍ VPS
+
+Poskytovatel: Hostinger
+Plán: KVM 2
+OS: Debian
+
+Po vytvoření:
+
+dostaneš IP adresu
+
+root heslo
+
+přístup do VPS Console (VNC)
+
+==================================================
+2) PRVNÍ PŘIHLÁŠENÍ
+
+Přihlášení přes Hostinger VPS Console:
+
+login: root
+password: (z emailu)
+
+==================================================
+3) ZÁKLADNÍ NASTAVENÍ SYSTÉMU
+
+Aktualizace systému:
+apt update && apt upgrade -y
+
+Nastavení časové zóny:
+timedatectl set-timezone Europe/Prague
+
+==================================================
+4) VYTVOŘENÍ BĚŽNÉHO UŽIVATELE
+
+Vytvoření uživatele:
+adduser kuba
+
+Přidání do sudo:
+usermod -aG sudo kuba
+
+Nastavení shellu:
+usermod -s /bin/bash kuba
+
+Přepnutí na uživatele:
+su - kuba
+
+==================================================
+5) ZÁKLADNÍ BALÍČKY (root / sudo)
+
+sudo apt install -y
+git
+curl
+ca-certificates
+nano
+unzip
+ufw
+nginx
+rsync
+
+==================================================
+6) FIREWALL (UFW)
+
+sudo ufw allow OpenSSH
+sudo ufw allow 80
+sudo ufw allow 443
+sudo ufw --force enable
+
+Kontrola:
+sudo ufw status
+
+==================================================
+7) NODE.JS + NPM (NVM)
+
+Instalace NVM (jako uživatel kuba):
+curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh
+ | bash
+
+Znovu načíst shell (nebo odhlásit/přihlásit):
+source ~/.bashrc
+
+Instalace Node 20:
+nvm install 20
+nvm use 20
+nvm alias default 20
+
+Kontrola:
+node -v
+npm -v
+
+==================================================
+8) PM2 (PROCESS MANAGER)
+
+Instalace:
+npm i -g pm2
+
+Kontrola:
+pm2 -v
+
+Autostart po rebootu:
+pm2 startup
+(spustit příkaz, který PM2 vypíše)
+
+Uložení konfigurace:
+pm2 save
+
+==================================================
+9) STRUKTURA APLIKACE
+
+Vytvoření složky:
+sudo mkdir -p /var/www
+sudo chown -R kuba:kuba /var/www
+
+mkdir -p /var/www/origio-app
+
+Struktura:
+
+/var/www/origio-app
+
+.env
+
+standalone/
+
+server.js
+
+.next/
+
+public/
+
+==================================================
+10) NGINX (REVERSE PROXY)
+
+Konfigurační soubor:
+sudo nano /etc/nginx/sites-available/origio
+
+Obsah:
+
+server {
+listen 80;
+server_name app.origio.site *.origio.site;
+
+client_max_body_size 50m;
+
+location / {
+proxy_pass http://127.0.0.1:3000
+;
+proxy_http_version 1.1;
+
+proxy_set_header Host $host;
+proxy_set_header X-Forwarded-Host $host;
+proxy_set_header X-Forwarded-Proto $scheme;
+proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+proxy_set_header Upgrade $http_upgrade;
+proxy_set_header Connection "upgrade";
+
+
+}
+}
+
+Aktivace:
+sudo ln -sf /etc/nginx/sites-available/origio /etc/nginx/sites-enabled/origio
+
+Kontrola:
+sudo nginx -t
+sudo systemctl reload nginx
+
+==================================================
+11) DNS
+
+V DNS zóně origio.site:
+
+A záznam:
+app.origio.site -> IP VPS
+
+A záznam:
+*.origio.site -> IP VPS
+
+Kontrola:
+dig app.origio.site
+dig test.origio.site
+
+==================================================
+12) DEPLOY STRATEGIE (STANDALONE)
+
+build probíhá lokálně
+
+na server se nahrává jen:
+
+.next/standalone
+
+.next/static
+
+public
+
+žádný build na serveru
+
+běh přes PM2
+
+==================================================
+13) PM2 START APLIKACE
+
+Aplikace běží z:
+/var/www/origio-app/standalone/server.js
+
+Port:
+3000 (default Next.js)
+
+Kontrola:
+curl http://127.0.0.1:3000
+
+==================================================
+14) HTTPS (LETS ENCRYPT)
+
+Instalace:
+sudo apt install -y certbot python3-certbot-nginx
+
+Vydání certifikátu:
+sudo certbot --nginx -d app.origio.site
+
+Zvolit:
+
+redirect HTTP -> HTTPS: YES
+
+Kontrola:
+curl -I https://app.origio.site
+
+==================================================
+15) DŮLEŽITÁ POZNÁMKA
+
+Bez HTTPS:
+
+https://app.origio.site
+ se „nekonečně načítá“
+
+browser čeká na TLS
+
+curl přes http vrací 200, ale web nefunguje
+
+HTTPS certifikát byl klíčový krok.
+
+==================================================
+16) DOPORUČENÉ ENV PROMĚNNÉ
+
+NEXTAUTH_URL=https://app.origio.site
+
+AUTH_TRUST_HOST=true
+NODE_ENV=production
+
+Po změně:
+pm2 restart origio-app --update-env
+
+==================================================
+17) STAV NA KONCI
+
+VPS připravený
+
+automatický deploy script
+
+PM2 hlídá aplikaci
+
+Nginx proxy
+
+HTTPS funkční
+
+připraveno na wildcard subdomény
+
+produkční SaaS setup
+
+==================================================
+
+KONEC DOKUMENTACE
