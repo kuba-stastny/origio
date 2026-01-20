@@ -21,48 +21,50 @@ const PROMPT = {
 
   common: {
     output: [
-      "Reply STRICTLY with JSON that matches the given defaultData structure.",
-      "Keep the exact same keys and value types. Do NOT add/remove fields.",
-      "No explanations or comments around the JSON.",
-      "No placeholders like 'Lorem ipsum', 'Title', 'Description', etc.",
+      "Odpověz POUZE validním JSONem, který přesně odpovídá struktuře defaultData.",
+      "Zachovej stejné klíče i datové typy hodnot. NIC nepřidávej ani neubírej.",
+      "Žádné vysvětlování, žádné komentáře, žádný text okolo JSONu.",
+      "Žádné výplně typu „Lorem ipsum“, „Nadpis“, „Popis“, apod.",
+      "Všechny texty PIŠ ČESKY. Nikde žádná angličtina.",
     ],
     constraints: [
-      "Explicitly reflect idealCustomer.",
-      "Reflect mainProblem in hero/services copy.",
-      "Match the selected toneOfVoice in writing style.",
-      "Primary CTA must align with websiteGoal.",
-      "Follow SECTION META strictly (what the section is and what it should contain).",
-      "SECTION META NOTE is HIGH PRIORITY. Never ignore it.",
+      "Jasně vysvětli hodnotu nabídky během prvních 5–10 sekund (hlavně hero).",
+      "Mluv jazykem cílové skupiny (žádný marketingový balast).",
+      "Veď čtenáře k jedné konkrétní akci, která odpovídá websiteGoal.",
+      "Piš konkrétně, stručně a lidsky s přihlédnutím na toneOfVoice.",
+      "Bez klišé, prázdných frází a „agenturního“ jazyka.",
+      "Důraz na přínos pro uživatele, ne na popis služby.",
+      "Musí být zřetelně reflektovaný idealCustomer.",
+      "V hero a službách musí být vidět mainProblem (co řešíš a proč to někoho zajímá).",
+      "Dodrž SECTION META (co je to za sekci a co má obsahovat).",
+      "SECTION META NOTE má NEJVYŠŠÍ PRIORITU. Nikdy ji neignoruj.",
+      "Když chybí informace (cílovka, nabídka, fáze funnelu), domysli typické, realistické informace jako zkušený freelancer v oboru (primaryFocus) tak, aby to vedlo idealCustomer ke konverzi podle websiteGoal.",
     ],
     length: [
-      "Headings/labels short and punchy.",
-      "Descriptions/body text concrete and specific (often 4–8 sentences).",
+      "Nadpisy a labely krátké, úderné.",
+      "Popisy a body text konkrétní a specifické (často 4–8 vět).",
+      "Žádný zbytečný balast. Každá věta musí mít důvod.",
+    ],
+    style: [
+      "Styl: sebevědomý, profesionální.",
+      "Bez vykřičníků. Bez hype. Bez přehnaných slibů.",
+      "Česky, přirozeně, jako bys mluvil s reálným člověkem.",
     ],
   },
 
   cs: {
     systemIntro: [
       "Jsi zkušený seniorní český copywriter pro webové stránky.",
-      "Specializuješ se na marketingové texty pro moderní landing page a služby / osobní značky.",
-      "Piš přirozeně, konkrétně a přesvědčivě. Vyhýbej se obecným frázím a klišé.",
+      "Píšeš webové texty, které rychle vysvětlují hodnotu a vedou ke konverzní akci.",
+      "Specializuješ se na moderní landing page pro služby a osobní značky.",
+      "Píšeš přirozeně, konkrétně a s respektem k cílové skupině.",
     ],
     toneRules: [
-      "Piš česky.",
-      "Buď konverzní, konkrétní a lidský.",
-      "Nepoužívej generické marketingové fráze typu: 'posuňte své podnikání', 'na míru šitá řešení' apod., pokud nejsou opravdu podložené onboardingem.",
-    ],
-  },
-
-  en: {
-    systemIntro: [
-      "You are a senior-level English web copywriter.",
-      "You write conversion-focused copy for modern service businesses / personal brands.",
-      "Be specific and persuasive. Avoid generic clichés.",
-    ],
-    toneRules: [
-      "Write in English.",
-      "Be conversion-focused and concrete.",
-      "Avoid vague claims unless supported by onboarding proof.",
+      "Vše piš česky.",
+      "Žádný marketingový balast a agenturní fráze.",
+      "Žádné klišé typu „posuňte své podnikání“, „řešení na míru“, „komplexní služby“ bez konkrétního důkazu v onboardingu.",
+      "Nepoužívej anglické termíny, pokud nejsou opravdu nutné (a když už, tak maximálně ojediněle a přirozeně). Ideálně vůbec.",
+      "Primární CTA musí jasně odpovídat websiteGoal.",
     ],
   },
 
@@ -186,45 +188,46 @@ function isEmptyObject(v: unknown) {
 
 /**
  * ✅ Build a strong brief for LLM from onboarding (source of truth)
+ * Pozn.: i když přijde language=en, generujeme vždy česky (uživatelský požadavek).
  */
-function buildBriefFromOnboarding(o: OnboardingV1, language: Lang) {
+function buildBriefFromOnboarding(o: OnboardingV1, _language: Lang) {
   const lines: string[] = [];
 
-  if (language === "cs") {
-    lines.push("Vytvoř moderní one-page web pro osobní služby / podnikání.");
-    if (clean(o.name)) lines.push(`Jméno / značka: ${clean(o.name)}`);
-    if (clean(o.primaryFocus)) lines.push(`Obor: ${clean(o.primaryFocus)}`);
+  lines.push("Vytvoř moderní one-page web pro osobní služby / podnikání.");
+  if (clean(o.name)) lines.push(`Jméno / značka: ${clean(o.name)}`);
+  if (clean(o.primaryFocus)) lines.push(`Obor: ${clean(o.primaryFocus)}`);
 
-    if (clean(o.idealCustomer)) lines.push(`Ideální zákazník: ${clean(o.idealCustomer)}`);
-    if (clean(o.mainProblem)) lines.push(`Hlavní problém, který řeším: ${clean(o.mainProblem)}`);
-    if (clean(o.avoidCustomer)) lines.push(`S kým nechci spolupracovat: ${clean(o.avoidCustomer)}`);
+  if (clean(o.idealCustomer)) lines.push(`Ideální zákazník: ${clean(o.idealCustomer)}`);
+  if (clean(o.mainProblem)) lines.push(`Hlavní problém, který řeším: ${clean(o.mainProblem)}`);
+  if (clean(o.avoidCustomer)) lines.push(`S kým nechci spolupracovat: ${clean(o.avoidCustomer)}`);
 
-    if (clean(o.projectCount)) lines.push(`Zkušenosti (projekty): ${clean(o.projectCount)}`);
-    if (clean(o.toneOfVoice)) lines.push(`Tone of voice: ${clean(o.toneOfVoice)}`);
-    if (clean(o.brag)) lines.push(`Důkaz / pochlubit se: ${clean(o.brag)}`);
+  if (clean(o.projectCount)) lines.push(`Zkušenosti (projekty): ${clean(o.projectCount)}`);
+  if (clean(o.toneOfVoice)) lines.push(`Tone of voice: ${clean(o.toneOfVoice)}`);
+  if (clean(o.brag)) lines.push(`Důkaz / konkrétní opora: ${clean(o.brag)}`);
 
-    if (clean(o.websiteGoal)) lines.push(`Primární cíl webu (CTA): ${clean(o.websiteGoal)}`);
-    if (clean(o.templateId)) lines.push(`Vybraný design (template): ${clean(o.templateId)}`);
+  if (clean(o.websiteGoal)) lines.push(`Primární cíl webu (CTA): ${clean(o.websiteGoal)}`);
+  if (clean(o.templateId)) lines.push(`Vybraný design (template): ${clean(o.templateId)}`);
 
-    lines.push("Piš česky. Buď konkrétní, konverzní, bez klišé.");
-  } else {
-    lines.push("Create a modern one-page website for a service business / personal brand.");
-    if (clean(o.name)) lines.push(`Brand / name: ${clean(o.name)}`);
-    if (clean(o.primaryFocus)) lines.push(`Industry: ${clean(o.primaryFocus)}`);
-
-    if (clean(o.idealCustomer)) lines.push(`Ideal customer: ${clean(o.idealCustomer)}`);
-    if (clean(o.mainProblem)) lines.push(`Main problem solved: ${clean(o.mainProblem)}`);
-    if (clean(o.avoidCustomer)) lines.push(`Avoid customers like: ${clean(o.avoidCustomer)}`);
-
-    if (clean(o.projectCount)) lines.push(`Experience (projects): ${clean(o.projectCount)}`);
-    if (clean(o.toneOfVoice)) lines.push(`Tone of voice: ${clean(o.toneOfVoice)}`);
-    if (clean(o.brag)) lines.push(`Proof / credibility: ${clean(o.brag)}`);
-
-    if (clean(o.websiteGoal)) lines.push(`Primary website goal (CTA): ${clean(o.websiteGoal)}`);
-    if (clean(o.templateId)) lines.push(`Selected design (template): ${clean(o.templateId)}`);
-
-    lines.push("Write in English. Be specific, conversion-focused, avoid generic clichés.");
-  }
+  lines.push(
+    [
+      "Píšeš texty, které:",
+      "- jasně vysvětlují hodnotu nabídky během prvních 5–10 sekund,",
+      "- mluví jazykem cílové skupiny (žádný marketingový balast),",
+      "- vedou čtenáře k jedné konkrétní akci.",
+      "",
+      "Piš:",
+      "- konkrétně, stručně a lidsky s přihlédnutím na definovaný toneOfVoice,",
+      "- bez klišé, prázdných frází a „agenturního“ jazyka,",
+      "- s důrazem na přínos pro uživatele, ne na popis služby.",
+      "",
+      "Styl:",
+      "- sebevědomý, profesionální,",
+      "- žádné vykřičníky, žádný hype,",
+      "- psáno česky, přirozeně, jako bys mluvil s reálným člověkem.",
+      "",
+      "Pokud chybí informace, domysli realistické a typické informace pro daný obor tak, aby to vedlo ideálního zákazníka ke konverzní akci podle cíle webu.",
+    ].join("\n")
+  );
 
   return lines.join("\n").trim();
 }
@@ -243,43 +246,25 @@ function buildMetaJson(o: OnboardingV1 | null, language: Lang): MetaJson {
   const prob = clean(o?.mainProblem);
   const goal = clean(o?.websiteGoal);
 
-  let title = "";
-  let description = "";
+  // ✅ vždy česky (uživatelský požadavek)
+  const titleBase = [name || "", focus || ""].filter(Boolean).join(" — ").slice(0, 120);
+  const title = titleBase || "Osobní web — služby a kontakt";
 
-  if (language === "cs") {
-    title = [name || "", focus || ""].filter(Boolean).join(" — ").slice(0, 120);
-    if (!title) title = "Osobní web — služby a kontakt";
+  const descriptionBase = [
+    prob ? `Pomáhám řešit: ${prob}` : "",
+    ic ? `Pro: ${ic}` : "",
+    goal ? `Cíl: ${goal}` : "",
+  ]
+    .filter(Boolean)
+    .join(" • ")
+    .slice(0, 300);
 
-    description = [
-      prob ? `Pomáhám řešit: ${prob}` : "",
-      ic ? `Pro: ${ic}` : "",
-      goal ? `Cíl: ${goal}` : "",
-    ]
-      .filter(Boolean)
-      .join(" • ")
-      .slice(0, 300);
-
-    if (!description) description = "Moderní one-page web pro služby, důvěru a konverze.";
-  } else {
-    title = [name || "", focus || ""].filter(Boolean).join(" — ").slice(0, 120);
-    if (!title) title = "Service website — contact & conversions";
-
-    description = [
-      prob ? `I help solve: ${prob}` : "",
-      ic ? `For: ${ic}` : "",
-      goal ? `Goal: ${goal}` : "",
-    ]
-      .filter(Boolean)
-      .join(" • ")
-      .slice(0, 300);
-
-    if (!description) description = "Modern one-page website for services, trust and conversions.";
-  }
+  const description = descriptionBase || "Moderní one-page web pro služby, důvěru a konverze.";
 
   return {
     title,
     description,
-    locale: language === "cs" ? "cs_CZ" : "en_US",
+    locale: "cs_CZ",
     robots: "noindex,nofollow",
     ogTitle: null,
     ogDescription: null,
@@ -288,22 +273,97 @@ function buildMetaJson(o: OnboardingV1 | null, language: Lang): MetaJson {
   };
 }
 
+/* ----------------------- Header nav patching ---------------------- */
+function buildHeaderNavFromSections(sections: GeneratedSection[]) {
+  const LABEL_BY_TYPE: Record<string, string> = {
+    sh001: "Projekty",
+    sh002: "Projekty",
+    sh003: "Projekty",
+
+    sv001: "Služby",
+    sv002: "Služby",
+
+    ts001: "Reference",
+    ts002: "Reference",
+
+    ab001: "O mně",
+    ab002: "O mně",
+
+    ct001: "Kontakt",
+    ct002: "Kontakt",
+
+    ga001: "Galerie",
+    st001: "Klienti",
+    st002: "Výsledky",
+  };
+
+  const NAV_ORDER = [
+    "sh001",
+    "sh002",
+    "sh003",
+    "sv001",
+    "sv002",
+    "ts001",
+    "ts002",
+    "ab001",
+    "ab002",
+    "ct001",
+    "ct002",
+    "ga001",
+    "st001",
+    "st002",
+  ];
+
+  const idByType = new Map<string, string>();
+  for (const s of sections) idByType.set(s.type, s.id);
+
+  const nav: any[] = [];
+  for (const type of NAV_ORDER) {
+    const id = idByType.get(type);
+    if (!id) continue;
+
+    const label = LABEL_BY_TYPE[type];
+    if (!label) continue;
+
+    if (nav.some((x) => x.label === label)) continue;
+
+    nav.push({
+      href: { mode: "section", value: id },
+      label,
+    });
+  }
+
+  return nav;
+}
+
+function patchHeaderNav(sections: GeneratedSection[]) {
+  const header = sections.find((s) => s.type === "hd001");
+  if (!header) return;
+  if (!isRecord(header.data)) return;
+
+  (header.data as any).nav = buildHeaderNavFromSections(sections);
+}
+
 /* ----------------------- Prompt builder (UX) ---------------------- */
-function buildSystemPrompt(language: Lang) {
-  const L = language === "cs" ? PROMPT.cs : PROMPT.en;
+function buildSystemPrompt(_language: Lang) {
+  const L = PROMPT.cs;
+
   return [
     ...L.systemIntro,
     "",
-    "IMPORTANT:",
+    "DŮLEŽITÉ (výstup):",
     ...PROMPT.common.output.map((x) => `- ${x}`),
     "",
-    "HARD CONSTRAINTS:",
+    "TVRDÁ PRAVIDLA:",
     ...PROMPT.common.constraints.map((x) => `- ${x}`),
     "",
-    "LENGTH:",
+    "DÉLKA A STRUKTURA:",
     ...PROMPT.common.length.map((x) => `- ${x}`),
     "",
-    "TONE:",
+    "STYL:",
+    ...PROMPT.common.style.map((x) => `- ${x}`),
+    "",
+    "TÓN PSANÍ:",
     ...L.toneRules.map((x) => `- ${x}`),
   ].join("\n");
 }
@@ -320,28 +380,29 @@ function buildUserPrompt(args: {
 
   const sectionMetaHighPriority = meta
     ? [
-        "SECTION META — HIGH PRIORITY (never ignore):",
+        "SECTION META — NEJVYŠŠÍ PRIORITA (nikdy neignoruj):",
         `- id: ${meta.id}`,
         `- type: ${meta.type}`,
         `- title: ${meta.title}`,
         meta.aiHint ? `- aiHint: ${meta.aiHint}` : "",
-        meta.note ? `- NOTE (HIGH PRIORITY): ${meta.note}` : "",
+        meta.note ? `- NOTE (NEJVYŠŠÍ PRIORITA): ${meta.note}` : "",
         "",
-        "You MUST follow the NOTE above even if it requires stronger specificity. If NOTE conflicts with vague copy, choose NOTE.",
+        "Musíš dodržet NOTE výše i za cenu větší konkrétnosti. Pokud je text vágní, vyhraj NOTE.",
+        "Všechno piš česky.",
       ]
         .filter(Boolean)
         .join("\n")
-    : "SECTION META — HIGH PRIORITY: (not found for this id) — follow defaultData strictly.";
+    : "SECTION META — NEJVYŠŠÍ PRIORITA: (nenalezeno pro toto id) — drž se striktně defaultData.";
 
   const blocks: Record<(typeof PROMPT.userPromptOrder)[number], string> = {
     persona: persona ? `Persona: ${persona}` : "",
-    brief: `Brief:\n${brief || "not provided"}`,
+    brief: `Brief:\n${brief || "nezadáno"}`,
     onboarding: onboarding
-      ? `ONBOARDING (source of truth):\n${JSON.stringify(onboarding, null, 2)}`
+      ? `ONBOARDING (zdroj pravdy):\n${JSON.stringify(onboarding, null, 2)}`
       : "",
-    sectionType: `Section id: "${type}"`,
+    sectionType: `ID sekce: "${type}"`,
     sectionMetaHighPriority,
-    defaultData: `defaultData structure to fill:\n${JSON.stringify(defaultData, null, 2)}`,
+    defaultData: `Struktura defaultData k vyplnění:\n${JSON.stringify(defaultData, null, 2)}`,
   };
 
   return PROMPT.userPromptOrder
@@ -564,7 +625,9 @@ export async function POST(
   const b: BodyIn =
     typeof raw === "object" && raw !== null ? (raw as BodyIn) : ({} as BodyIn);
 
-  const language: Lang = String(b.language ?? "cs").toLowerCase() === "en" ? "en" : "cs";
+  // ✅ i když přijde "en", generujeme česky (uživatelský požadavek)
+  const language: Lang = "cs";
+
   const definitions: Definitions = b.definitions ?? {};
   const maxSections = Math.min(Number(b.maxSections ?? 10), 12);
 
@@ -772,6 +835,9 @@ export async function POST(
     })
   );
 
+  // ✅ IMPORTANT: patch header nav to use REAL generated section IDs
+  patchHeaderNav(sections);
+
   // 6) save draft_json
   const draftDoc: DraftDoc = { version: 1, sections };
   const { error: uErr } = await supabase
@@ -790,8 +856,5 @@ export async function POST(
     warningsCount: warnings.length,
   });
 
-  return NextResponse.json(
-    { ok: true, pageId, sections, warnings },
-    { status: 200 }
-  );
+  return NextResponse.json({ ok: true, pageId, sections, warnings }, { status: 200 });
 }

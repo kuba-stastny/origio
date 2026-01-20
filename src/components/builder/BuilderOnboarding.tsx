@@ -468,7 +468,7 @@ export default function BuilderOnboarding({
         <div className="flex-1 px-6 sm:px-10 pb-44">
           <div
             className={cx(
-              "mx-auto w-full h-[100vh] overflow-y-scroll pb-40",
+              "mx-auto w-full h-[100vh] overflow-y-scroll pb-40 no-scrollbar",
               contentMax,
               step === 5 ? "pt-28 sm:pt-40" : "pt-24 sm:pt-36"
             )}

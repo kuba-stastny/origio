@@ -79,3 +79,13 @@ body {
 *::-webkit-scrollbar-corner {
   background: rgb(9 9 11); /* zinc-950 */
 }
+
+
+/* Hide scrollbar but keep scrolling */
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
+}
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE, Edge legacy */
+  scrollbar-width: none; /* Firefox */
+}

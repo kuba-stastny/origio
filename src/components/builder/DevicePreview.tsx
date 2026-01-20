@@ -233,9 +233,8 @@ export default function DevicePreview({
                 key="generating"
                 className="flex h-full flex-col items-center justify-center gap-3 text-center text-zinc-900"
               >
-                <ShinyIcon speed={2.6} glow>
                   <BsStars className="h-14 w-14 text-zinc-500" />
-                </ShinyIcon>
+                
 
                 {!!phase && (
                   <ShinyText text={phase} disabled={false} speed={3} className="custom-class" />
