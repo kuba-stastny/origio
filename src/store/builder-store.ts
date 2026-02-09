@@ -25,10 +25,7 @@ function stableStringify(value: any): string {
   return JSON.stringify(norm(value));
 }
 
-function computePublishMode(
-  draftSections: any,
-  publishedSections: any
-): PublishMode {
+function computePublishMode(draftSections: any, publishedSections: any): PublishMode {
   if (publishedSections == null) return "publish";
   return stableStringify(draftSections) === stableStringify(publishedSections)
     ? "published"
@@ -47,6 +44,7 @@ type BuilderState = {
   sections: BlockInstance[];
 
   theme: DesignSystem | null;
+  themeReady: boolean; // ✅ NEW: hard gate (žádné fallbacky)
 
   pageGenerating: boolean;
   pageProgress: number | null;
@@ -63,7 +61,11 @@ type BuilderState = {
   setPublishStatusLoaded: (v: boolean) => void;
 
   // === INIT ===
+  // původní init (sekce)
   loadInitial: (pageId: string, sections: BlockInstance[]) => void;
+
+  // ✅ NEW: atomický init (sekce + theme) => po autogenu používej tohle
+  loadInitialFull: (pageId: string, sections: BlockInstance[], theme: DesignSystem) => void;
 
   // ✅ PUBLISH: set published snapshot (z DB / po publish)
   setPublishedSnapshot: (sections: BlockInstance[] | null) => void;
@@ -88,6 +90,8 @@ type BuilderState = {
   setPageGenerating: (v: boolean) => void;
   setPageProgress: (v: number | null) => void;
   setPagePhase: (t: string | null) => void;
+
+  // ✅ reset
   resetProgress: () => void;
 };
 
@@ -144,9 +148,7 @@ function deepSetImmutable<T>(input: T, path: string, value: unknown): T {
     return { ...(node ?? {}), [key]: updatedChild };
   };
 
-  const root = Array.isArray(input)
-    ? (input as any[]).slice()
-    : { ...(input as any) };
+  const root = Array.isArray(input) ? (input as any[]).slice() : { ...(input as any) };
   return setAt(root, 0) as T;
 }
 
@@ -180,7 +182,9 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
   pageId: null,
   selectedId: null,
   sections: [],
+
   theme: null,
+  themeReady: false, // ✅ NEW
 
   pageGenerating: false,
   pageProgress: null,
@@ -192,18 +196,46 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
   publishStatusLoaded: false,
   setPublishStatusLoaded: (v) => set({ publishStatusLoaded: !!v }),
 
-  // init sekcí (draft)
+  /**
+   * ⚠️ PŮVODNÍ init (jen sekce):
+   * Tady byl problém: nastavoval pageGenerating:false -> UI renderovalo dřív než theme.
+   *
+   * Nově: pokud themeReady není true, NEUKONČUJ generování.
+   * (žádné fallbacky, žádný flash)
+   */
   loadInitial: (pageId, sections) =>
+    set((s) => {
+      const nextSections = Array.isArray(sections) ? sections : [];
+      const hasTheme = s.themeReady && !!s.theme;
+
+      return {
+        pageId,
+        selectedId: null,
+        sections: nextSections,
+        // ✅ jen pokud už theme existuje, tak skonči generování
+        pageGenerating: hasTheme ? false : s.pageGenerating,
+        pageProgress: hasTheme ? null : s.pageProgress,
+        pagePhase: hasTheme ? null : s.pagePhase,
+        publishMode: computePublishMode(nextSections, s.publishedSnapshot),
+      };
+    }),
+
+  /**
+   * ✅ NOVÉ: atomický init (sekce + theme)
+   * Použij po autogenu = 0 flash.
+   */
+  loadInitialFull: (pageId, sections, theme) =>
     set((s) => {
       const nextSections = Array.isArray(sections) ? sections : [];
       return {
         pageId,
         selectedId: null,
         sections: nextSections,
+        theme,
+        themeReady: true,
         pageGenerating: false,
         pageProgress: null,
         pagePhase: null,
-        // publishMode se dopočítá z publishedSnapshot, který přijde později z publish-state
         publishMode: computePublishMode(nextSections, s.publishedSnapshot),
       };
     }),
@@ -226,7 +258,33 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
   setPageId: (id) => set({ pageId: id ?? null }),
   setProjectId: (id) => set({ projectId: id ?? null }),
 
-  setTheme: (theme) => set({ theme }),
+  /**
+   * ✅ Theme setter nastaví i themeReady.
+   * A hlavně: pokud už máme sections, tak ukončí generování až TEĎ.
+   */
+  setTheme: (theme) =>
+    set((s) => {
+      // ✅ pokud theme nepřišel, NIC nepřepisuj (hlavně ne na null)
+      if (!theme) return s as any;
+  
+      // ✅ pokud už existuje a je stejný, nedělej nic (méně rerenderů)
+      if (s.theme && JSON.stringify(s.theme) === JSON.stringify(theme)) {
+        return {
+          ...s,
+          themeReady: true,
+        } as any;
+      }
+  
+      // ✅ nastav nový theme (kompletní)
+      return {
+        ...s,
+        theme,
+        themeReady: true,
+      } as any;
+    }),
+  
+
+    
 
   replaceSections: (sections) => {
     set((s) => {
@@ -268,8 +326,7 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
       const len = arr.length;
       if (len === 0) return s;
 
-      if (from < 0 || from >= len || to < 0 || to > len || from === to)
-        return s;
+      if (from < 0 || from >= len || to < 0 || to > len || from === to) return s;
 
       const [moved] = arr.splice(from, 1);
       const safeTo = Math.max(0, Math.min(to, arr.length));
@@ -316,12 +373,7 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
       const next = state.sections.slice();
       const current = next[idx];
 
-      const updated = deepSetImmutable(
-        current as any,
-        path,
-        value
-      ) as BlockInstance;
-
+      const updated = deepSetImmutable(current as any, path, value) as BlockInstance;
       next[idx] = updated;
 
       return {
@@ -339,10 +391,16 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
   setPageProgress: (v) => set({ pageProgress: v }),
   setPagePhase: (t) => set({ pagePhase: t }),
 
+  /**
+   * ✅ Reset musí shodit i themeReady, jinak se ti po dalším autogenu
+   * “tváří ready” a zase to blikne podle timingů.
+   */
   resetProgress: () =>
     set({
       pageGenerating: false,
       pageProgress: null,
       pagePhase: null,
+      themeReady: false,
+      theme: null,
     }),
 }));

@@ -15,50 +15,42 @@ import { CinematicBlurUp } from "../../motion/cinematic";
 import PreviewImage from "../../previews/sh001.png";
 
 /* =========================================================
-   Types (for renderer)
+   Types (image only)
 ========================================================= */
-type MediaType = "image" | "video";
-type MediaObj = { type?: MediaType; src?: string; alt?: string } | string | undefined;
+type ImageValue = { src?: string; alt?: string } | string | undefined;
 
-function normalizeMedia(value: MediaObj): { type: MediaType; src: string; alt: string } {
-  if (typeof value === "string") return { type: "image", src: value, alt: "" };
+function normalizeImage(value: ImageValue): { src: string; alt: string } {
+  if (typeof value === "string") return { src: value, alt: "" };
   const v = (value || {}) as any;
-  const type: MediaType = v.type === "video" ? "video" : "image";
   const src = typeof v.src === "string" ? v.src : "";
   const alt = typeof v.alt === "string" ? v.alt : "";
-  return { type, src, alt };
+  return { src, alt };
 }
 
 /* =========================================================
-   Výchozí data
-   - item 1: image only (type:image)
-   - item 2: video only (type:video)
-   - item 3: both allowed (we default to image, user can switch)
+   Default data (image only)
 ========================================================= */
 export const SHOWROOM_DEFAULT_ITEMS = [
   {
-    media: {
-      type: "image",
+    image: {
       src: "https://app.origio.site/images/mockup.png",
-      alt: "Case study – 1",
+      alt: "Project preview",
     },
     title: "Increase of +45% conversion rate after rewriting the landing page",
     tags: ["Technical SEO", "Business strategy", "Optimization"],
   },
   {
-    media: {
-      type: "video",
-      // dej sem reálné video url až budeš mít, zatím placeholder prázdný
-      src: "",
+    image: {
+      src: "https://app.origio.site/images/mockup.png",
+      alt: "Project preview",
     },
     title: "Rebrand + design system: faster shipping of features",
     tags: ["Design system", "UI audit", "Figma tokens"],
   },
   {
-    media: {
-      type: "image",
+    image: {
       src: "https://app.origio.site/images/mockup.png",
-      alt: "Case study – 3",
+      alt: "Project preview",
     },
     title: "AI-driven content pipeline reduced manual work by 70%",
     tags: ["Automation", "LLM tooling", "Workflows"],
@@ -85,8 +77,8 @@ function ShowroomRenderer({ block, theme }: ShowroomRendererProps) {
             {items.map((it, i) => {
               const isThird = i === 2;
 
-              const m = normalizeMedia(it.media);
-              const hasSrc = !!m.src?.trim();
+              const img = normalizeImage(it.image);
+              const src = img.src?.trim() ? img.src : "data:image/gif;base64,R0lGODlhAQABAAD/ACw=";
 
               return (
                 <CinematicBlurUp
@@ -104,34 +96,28 @@ function ShowroomRenderer({ block, theme }: ShowroomRendererProps) {
                     "bg-black/20", // fallback background
                   ].join(" ")}
                 >
-                  {/* MEDIA */}
-                  {m.type === "video" ? (
-                    <video
-                      src={hasSrc ? m.src : undefined}
-                      className="absolute inset-0 h-full w-full object-cover"
-                      muted
-                      playsInline
-                      loop
-                      autoPlay
-                      controls={false}
-                      preload="metadata"
-                    />
-                  ) : (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={hasSrc ? m.src : "data:image/gif;base64,R0lGODlhAQABAAD/ACw="}
-                      alt={m.alt || ""}
-                      className="absolute inset-0 h-full w-full object-cover"
-                      draggable={false}
-                    />
-                  )}
+                  {/* ✅ IMAGE (no video anymore) */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={src}
+                    alt={img.alt || ""}
+                    className="absolute inset-0 h-full w-full object-cover"
+                    draggable={false}
+                    loading="lazy"
+                  />
 
                   {/* overlay */}
                   <div className="pointer-events-none absolute inset-0 rounded-[16px] bg-[linear-gradient(180deg,rgba(0,0,0,0.40)_0%,rgba(0,0,0,0)_100%),rgba(0,0,0,0.24)]" />
 
                   {/* content */}
                   <div className="absolute inset-0 flex flex-col justify-between p-6">
-                    <Text as="div" tone="inherit" size="xl" weight="medium" className="max-w-[400px]">
+                    <Text
+                      as="div"
+                      tone="inherit"
+                      size="xl"
+                      weight="medium"
+                      className="max-w-[400px]"
+                    >
                       {it.title}
                     </Text>
 
@@ -141,7 +127,7 @@ function ShowroomRenderer({ block, theme }: ShowroomRendererProps) {
                           key={idx}
                           className={[
                             "flex items-center justify-center rounded-full px-3 py-1",
-                            "bg-black/40",
+                            "bg-black/40 text-white",
                           ].join(" ")}
                         >
                           <Text as="span" tone="inherit" size="sm" weight="light">
@@ -162,10 +148,7 @@ function ShowroomRenderer({ block, theme }: ShowroomRendererProps) {
 }
 
 /* =========================================================
-   Schema
-   - item 1: only image
-   - item 2: only video
-   - item 3: both image + video
+   Schema (image only)
 ========================================================= */
 export const SHOWROOM_SCHEMA = [
   {
@@ -174,13 +157,7 @@ export const SHOWROOM_SCHEMA = [
     path: "items",
     emptyHint: "Přidej první kartu",
     children: [
-      // ✅ Media: vždy povoleno image + video
-      {
-        type: "media",
-        path: "media",
-        label: "Média (obrázek / video)",
-        allowed: ["image", "video"],
-      },
+      { type: "image", path: "image", label: "Obrázek" },
 
       {
         type: "text",
@@ -201,7 +178,6 @@ export const SHOWROOM_SCHEMA = [
     ],
   },
 ] as const;
-
 
 function ShowroomEditor() {
   return (

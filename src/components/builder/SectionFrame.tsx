@@ -250,8 +250,7 @@ export default function SectionFrame({
         {/* Obsah sekce */}
         {children}
 
-        {/* Footer: Přidat sekci za tuto 
-        
+        {/*
         <div className="absolute opacity-100 md:opacity-0 group-hover:opacity-100 bottom-0 z-[50] left-0 w-full h-auto transition-all duration-200">
           <div className="relative">
             <div className="relative flex cursor-pointer justify-center mb-2">
@@ -274,7 +273,7 @@ export default function SectionFrame({
             </div>
           </div>
         </div>
-        */}
+       */}
       </div>
 
       {/* Confirm modal – renderovaný do document.body s animací */}

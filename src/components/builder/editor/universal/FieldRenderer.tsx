@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useRef } from "react";
 import type { SchemaField } from "./types";
 import { useEditorCtx } from "./EditorContext";
 
@@ -9,7 +9,6 @@ import NumberField from "./fields/NumberField";
 import SwitchField from "./fields/SwitchField";
 import SelectField from "./fields/SelectField";
 import ImageField from "./fields/ImageField";
-import MediaField from "./fields/MediaField";
 import RepeaterRow from "./RepeaterRow";
 import LinkField from "./fields/LinkField";
 import IconField from "./fields/IconField";
@@ -40,8 +39,13 @@ export default function FieldRenderer({
   basePath?: string;
 }) {
   const { draft, changeAt, getAt, openMediaFor } = useEditorCtx();
+  const finalizedRef = useRef(false);
 
-  const renderField = (f: SchemaField, idx: number, base = ""): React.ReactNode => {
+  const renderField = (
+    f: SchemaField,
+    idx: number,
+    base = ""
+  ): React.ReactNode => {
     if (f.visibleIf && !f.visibleIf(draft)) return null;
 
     // Group wrapper
@@ -51,8 +55,12 @@ export default function FieldRenderer({
           key={`g-${idx}`}
           className="grid gap-4 rounded-2xl bg-zinc-900/30 border-zinc-800/60 p-4"
         >
-          {f.label && <div className="text-sm font-medium text-zinc-200">{f.label}</div>}
-          <div className="grid gap-4">{f.children.map((c, i) => renderField(c, i, base))}</div>
+          {f.label && (
+            <div className="text-sm font-medium text-zinc-200">{f.label}</div>
+          )}
+          <div className="grid gap-4">
+            {f.children.map((c, i) => renderField(c, i, base))}
+          </div>
         </div>
       );
     }
@@ -77,7 +85,11 @@ export default function FieldRenderer({
       case "link":
         return (
           <Row key={idx} label={f.label} help={f.help}>
-            <LinkField value={getAt(fullPath)} onChange={(v) => changeAt(fullPath, v)} placeholder={f.placeholder} />
+            <LinkField
+              value={getAt(fullPath)}
+              onChange={(v) => changeAt(fullPath, v)}
+              placeholder={f.placeholder}
+            />
           </Row>
         );
 
@@ -98,14 +110,21 @@ export default function FieldRenderer({
       case "switch":
         return (
           <Row key={idx} label={f.label} help={f.help}>
-            <SwitchField checked={!!getAt(fullPath)} onChange={(v) => changeAt(fullPath, v)} />
+            <SwitchField
+              checked={!!getAt(fullPath)}
+              onChange={(v) => changeAt(fullPath, v)}
+            />
           </Row>
         );
 
       case "select":
         return (
           <Row key={idx} label={f.label} help={f.help}>
-            <SelectField value={getAt(fullPath)} onChange={(v) => changeAt(fullPath, v)} options={f.options} />
+            <SelectField
+              value={getAt(fullPath)}
+              onChange={(v) => changeAt(fullPath, v)}
+              options={f.options}
+            />
           </Row>
         );
 
@@ -120,22 +139,14 @@ export default function FieldRenderer({
           </Row>
         );
 
-      case "media":
-        return (
-          <Row key={idx} label={f.label} help={f.help}>
-            <MediaField
-              value={getAt(fullPath)}
-              onChange={(v) => changeAt(fullPath, v)}
-              onPick={(type) => openMediaFor(fullPath, { type })}
-              allowed={f.allowed}
-            />
-          </Row>
-        );
-
       case "icon":
         return (
           <Row key={idx} label={f.label} help={f.help}>
-            <IconField value={getAt(fullPath)} onChange={(v) => changeAt(fullPath, v)} placeholder={f.placeholder ?? "Select icon…"} />
+            <IconField
+              value={getAt(fullPath)}
+              onChange={(v) => changeAt(fullPath, v)}
+              placeholder={f.placeholder ?? "Select icon…"}
+            />
           </Row>
         );
 
@@ -164,7 +175,8 @@ export default function FieldRenderer({
           <div key={idx} className="grid gap-2 p-5 rounded-2xl bg-zinc-900/30">
             <div className="flex items-center justify-between">
               <div className="text-base text-zinc-200">
-                {f.label ?? "Seznam položek"} <span className="text-zinc-500">({items.length})</span>
+                {f.label ?? "Seznam položek"}{" "}
+                <span className="text-zinc-500">({items.length})</span>
               </div>
               <button
                 type="button"
@@ -192,7 +204,9 @@ export default function FieldRenderer({
                   onRemove={() => removeItem(i)}
                 >
                   <div className="grid gap-6">
-                    {f.children.map((child, ci) => renderField(child, ci, `${fullPath}.${i}`))}
+                    {f.children.map((child, ci) =>
+                      renderField(child, ci, `${fullPath}.${i}`)
+                    )}
                   </div>
                 </RepeaterRow>
               ))}

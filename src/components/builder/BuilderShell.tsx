@@ -15,9 +15,14 @@ type BuilderShellProps = {
   projectSlug: string;
   pageId: string;
   initialDoc: PageDocument;
-  canPublish: boolean; // může zůstat, ale v beta už publish neblokujeme
+  canPublish: boolean;
   theme: DesignSystem;
 };
+
+function isThemeComplete(t: any): t is DesignSystem {
+  // ✅ minimální kontrola podle toho, co ti padalo (primaryHover)
+  return !!t && typeof t.primaryHover === "string" && t.primaryHover.trim() !== "";
+}
 
 export default function BuilderShell({
   workspaceId,
@@ -31,27 +36,21 @@ export default function BuilderShell({
   const loadInitial = useBuilderStore((s) => s.loadInitial);
   const setTheme = useBuilderStore((s) => s.setTheme);
 
-  // ✅ nově
   const setProjectId = useBuilderStore((s) => s.setProjectId);
   const setPageId = useBuilderStore((s) => s.setPageId);
   const setPublishedSnapshot = useBuilderStore((s) => s.setPublishedSnapshot);
 
-  // live theme z builder storu
-  const liveTheme = useBuilderStore((s) => s.theme);
-  const effectiveTheme = liveTheme ?? theme;
-
   useEffect(() => {
-    // ✅ 1) vždy nastav projectId + pageId do store (kvůli autosave)
+    // 1) ids
     setProjectId(projectId ?? null);
     setPageId(pageId ?? null);
 
-    // ✅ 2) draft sekce (to už máš)
+    // 2) draft
     const draftSections = Array.isArray((initialDoc as any)?.sections)
       ? (initialDoc as any).sections
       : [];
 
-    // ✅ 3) published sekce (musí přijít ze serveru; může být null)
-    // UPRAV klíč podle toho, jak to máš ve `initialDoc`:
+    // 3) published snapshot
     const publishedSectionsOrNull =
       Array.isArray((initialDoc as any)?.publishedSections)
         ? (initialDoc as any).publishedSections
@@ -63,16 +62,13 @@ export default function BuilderShell({
         ? null
         : null;
 
-    // ✅ 4) nastav published snapshot dřív, než loadneš draft (aby publishMode seděl hned)
     setPublishedSnapshot(publishedSectionsOrNull);
 
-    // ✅ 5) load draft
-    if (pageId) {
-      loadInitial(pageId, draftSections);
-    }
+    // 4) load draft
+    if (pageId) loadInitial(pageId, draftSections);
 
-    // ✅ 6) theme do store
-    if (theme) {
+    // 5) ✅ theme do store – ale jen když je kompletní (abychom nepřepsali dobrý theme rozbitým)
+    if (isThemeComplete(theme)) {
       setTheme(theme);
     }
   }, [
@@ -90,12 +86,7 @@ export default function BuilderShell({
   return (
     <div className="relative h-[100vh] overflow-hidden text-zinc-950">
       <div className="h-full w-full transition-[margin] duration-200 ease-out">
-
-        <DevicePreview
-          projectSlug={projectSlug}
-          // canPublish={canPublish} // beta: klidně pryč, když už neblokuješ
-          theme={effectiveTheme}
-        />
+        <DevicePreview projectSlug={projectSlug} />
       </div>
 
       <LeftSlideOverHost />

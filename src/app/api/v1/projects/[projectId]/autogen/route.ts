@@ -7,6 +7,11 @@ import { nanoid } from "@/utils/ids";
 import { getPreset } from "@/lib/templates/presets";
 import { THEME_BLACKY, THEME_WHITEY } from "@/lib/templates/themes";
 import { SECTION_META_BY_ID, PREFERRED_ORDER } from "@/sections/section-meta";
+import { mapThemeJson } from "@/lib/design-system";
+
+// ✅ IMPORTANT: žádné cache / žádné překvapení
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 /* ----------------------------- Config ----------------------------- */
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY ?? "";
@@ -186,9 +191,123 @@ function isEmptyObject(v: unknown) {
   return isRecord(v) && Object.keys(v).length === 0;
 }
 
+/** Deep set by dot-path, creates objects on the way */
+function setByPath(root: any, path: string, value: any) {
+  if (!root || typeof root !== "object") return false;
+  const parts = path.split(".").filter(Boolean);
+  if (!parts.length) return false;
+
+  let cur = root;
+  for (let i = 0; i < parts.length - 1; i++) {
+    const k = parts[i]!;
+    const next = cur[k];
+    if (!next || typeof next !== "object" || Array.isArray(next)) {
+      cur[k] = {};
+    }
+    cur = cur[k];
+  }
+  cur[parts[parts.length - 1]!] = value;
+  return true;
+}
+
+/** Set first matching path from list (safe for schema drift) */
+function setFirstByPaths(root: any, paths: string[], value: any) {
+  for (const p of paths) {
+    if (setByPath(root, p, value)) return true;
+  }
+  return false;
+}
+
+/** Normalize link to section-mode */
+function makeSectionHref(sectionId: string) {
+  return { mode: "section", value: sectionId };
+}
+
+/**
+ * Decide if onboarding CTA is "Kontaktovat mě" (vs call/booking).
+ * (heuristic, because onboarding currently only has websiteGoal as string)
+ */
+function wantsContactCta(o?: OnboardingV1 | null) {
+  const g = clean(o?.websiteGoal).toLowerCase();
+  if (!g) return false;
+
+  const contactLike = /(kontakt|napiš|napsat|email|e-?mail|zpráv|ozvi|poptávk)/i.test(g);
+  const callLike =
+    /(hovor|call|schůzk|schuzk|konzultac|rezerv|booking|calendly|termín|termin)/i.test(g);
+
+  // If it explicitly looks like a call/booking, do NOT treat it as contact button.
+  if (callLike) return false;
+  return contactLike;
+}
+
+/* -----------------------------
+   ✅ CTA patching (UPDATED)
+-------------------------------- */
+function patchCtas(sections: GeneratedSection[], onboarding?: OnboardingV1 | null) {
+  const idByType = new Map<string, string>();
+  for (const s of sections) idByType.set(s.type, s.id);
+
+  const contactId = idByType.get("ct001") || idByType.get("ct002") || null;
+
+  const projectsId =
+    idByType.get("sh001") ||
+    idByType.get("sh002") ||
+    idByType.get("sh003") ||
+    idByType.get("ga001") ||
+    null;
+
+  // ✅ NEW: if user chose "Kontaktovat mě", patch header CTA to contact section
+  if (contactId && wantsContactCta(onboarding)) {
+    const header = sections.find((s) => s.type === "hd001");
+    if (header && isRecord(header.data)) {
+      const href = makeSectionHref(contactId);
+
+      // try common CTA shapes (to survive schema differences)
+      setFirstByPaths(header.data as any, ["cta.href", "ctaPrimary.href", "primaryCta.href"], href);
+
+      // optional: if header has a secondary CTA, align it too (safe/no-op if path absent)
+      setFirstByPaths(
+        header.data as any,
+        ["ctaSecondary.href", "secondaryCta.href"],
+        href
+      );
+    }
+  }
+
+  if (!contactId && !projectsId) return;
+
+  for (const s of sections) {
+    if (!isRecord(s.data)) continue;
+
+    // skip contact sections themselves
+    if (s.type === "ct001" || s.type === "ct002") continue;
+
+    // NOTE: header CTA is handled above (only when user wants contact)
+    if (s.type === "hd001") continue;
+
+    // hero CTA patching (existing behavior)
+    if (s.type === "h001" || s.type === "h002") {
+      if (contactId) {
+        setByPath(s.data, "ctaPrimary.href", makeSectionHref(contactId));
+      }
+      if (projectsId) {
+        setByPath(s.data, "ctaSecondary.href", makeSectionHref(projectsId));
+      } else if (contactId) {
+        setByPath(s.data, "ctaSecondary.href", makeSectionHref(contactId));
+      }
+      continue;
+    }
+
+    // services CTA patching (existing behavior)
+    if (s.type === "sv002" && contactId) {
+      setByPath(s.data, "cta.href", makeSectionHref(contactId));
+      continue;
+    }
+  }
+}
+
 /**
  * ✅ Build a strong brief for LLM from onboarding (source of truth)
- * Pozn.: i když přijde language=en, generujeme vždy česky (uživatelský požadavek).
  */
 function buildBriefFromOnboarding(o: OnboardingV1, _language: Lang) {
   const lines: string[] = [];
@@ -210,22 +329,8 @@ function buildBriefFromOnboarding(o: OnboardingV1, _language: Lang) {
 
   lines.push(
     [
-      "Píšeš texty, které:",
-      "- jasně vysvětlují hodnotu nabídky během prvních 5–10 sekund,",
-      "- mluví jazykem cílové skupiny (žádný marketingový balast),",
-      "- vedou čtenáře k jedné konkrétní akci.",
-      "",
-      "Piš:",
-      "- konkrétně, stručně a lidsky s přihlédnutím na definovaný toneOfVoice,",
-      "- bez klišé, prázdných frází a „agenturního“ jazyka,",
-      "- s důrazem na přínos pro uživatele, ne na popis služby.",
-      "",
-      "Styl:",
-      "- sebevědomý, profesionální,",
-      "- žádné vykřičníky, žádný hype,",
-      "- psáno česky, přirozeně, jako bys mluvil s reálným člověkem.",
-      "",
-      "Pokud chybí informace, domysli realistické a typické informace pro daný obor tak, aby to vedlo ideálního zákazníka ke konverzní akci podle cíle webu.",
+      "Vše piš česky. Bez klišé. Vedeš čtenáře k jedné konkrétní akci.",
+      "Pokud chybí informace, domysli realistické a typické informace pro obor tak, aby to vedlo ke konverzní akci.",
     ].join("\n")
   );
 
@@ -239,14 +344,13 @@ function derivePersona(b: BodyIn, o?: OnboardingV1 | null) {
   return fromOnboarding || null;
 }
 
-function buildMetaJson(o: OnboardingV1 | null, language: Lang): MetaJson {
+function buildMetaJson(o: OnboardingV1 | null, _language: Lang): MetaJson {
   const name = clean(o?.name);
   const focus = clean(o?.primaryFocus);
   const ic = clean(o?.idealCustomer);
   const prob = clean(o?.mainProblem);
   const goal = clean(o?.websiteGoal);
 
-  // ✅ vždy česky (uživatelský požadavek)
   const titleBase = [name || "", focus || ""].filter(Boolean).join(" — ").slice(0, 120);
   const title = titleBase || "Osobní web — služby a kontakt";
 
@@ -445,13 +549,11 @@ function buildOpenAIBody(args: {
     response_format: { type: "json_object" },
   };
 
-  // ✅ gpt-5-*: use max_completion_tokens, no temperature
   if (/^gpt-5/i.test(args.model)) {
     base.max_completion_tokens = args.maxTokens;
     return base;
   }
 
-  // ✅ older chat.completions models: max_tokens + temperature
   base.max_tokens = args.maxTokens;
   if (modelSupportsTemperature(args.model)) base.temperature = args.temperature;
   return base;
@@ -481,19 +583,6 @@ async function generateSectionCopy<T extends Json>(args: {
     onboarding: args.onboarding ?? null,
   });
 
-  const willSendTemperature =
-    modelSupportsTemperature(OPENAI_MODEL) && !/^gpt-5/i.test(OPENAI_MODEL);
-
-  console.log(`[autogen] openai.request`, {
-    type: args.type,
-    model: OPENAI_MODEL,
-    systemChars: system.length,
-    userChars: user.length,
-    willSendTemperature,
-    max_output_tokens: PROMPT.maxTokens,
-    meta: SECTION_META_BY_ID[args.type],
-  });
-
   const body = buildOpenAIBody({
     model: OPENAI_MODEL,
     system,
@@ -501,9 +590,6 @@ async function generateSectionCopy<T extends Json>(args: {
     maxTokens: PROMPT.maxTokens,
     temperature: PROMPT.temperature,
   });
-
-  const started = Date.now();
-  let status = 0;
 
   try {
     const res = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -515,17 +601,10 @@ async function generateSectionCopy<T extends Json>(args: {
       body: JSON.stringify(body),
     });
 
-    status = res.status;
     const payload = await res.json().catch(() => null);
 
     if (!res.ok) {
-      const msg =
-        payload?.error?.message || `OpenAI request failed (status ${res.status})`;
-      console.log(`[autogen] openai.error`, {
-        type: args.type,
-        status: res.status,
-        message: msg,
-      });
+      const msg = payload?.error?.message || `OpenAI request failed (status ${res.status})`;
       return {
         data: structuredClone(args.defaultData),
         warning: `OpenAI error for "${args.type}": ${msg} → fallback defaultData`,
@@ -533,16 +612,6 @@ async function generateSectionCopy<T extends Json>(args: {
     }
 
     const rawText = payload?.choices?.[0]?.message?.content ?? "";
-    const ms = Date.now() - started;
-
-    console.log(`[autogen] openai.response`, {
-      type: args.type,
-      status,
-      ms,
-      outputChars: rawText?.length ?? 0,
-      rawPreview: (rawText || "").slice(0, 260),
-    });
-
     const extracted = extractJsonObject(rawText);
     if (!extracted) {
       return {
@@ -563,11 +632,6 @@ async function generateSectionCopy<T extends Json>(args: {
 
     return { data: parsed };
   } catch (e: any) {
-    console.log(`[autogen] openai.exception`, {
-      type: args.type,
-      status,
-      message: e?.message || String(e),
-    });
     return {
       data: structuredClone(args.defaultData),
       warning: `OpenAI exception for "${args.type}": ${e?.message || e} → fallback defaultData`,
@@ -625,20 +689,10 @@ export async function POST(
   const b: BodyIn =
     typeof raw === "object" && raw !== null ? (raw as BodyIn) : ({} as BodyIn);
 
-  // ✅ i když přijde "en", generujeme česky (uživatelský požadavek)
   const language: Lang = "cs";
 
   const definitions: Definitions = b.definitions ?? {};
   const maxSections = Math.min(Number(b.maxSections ?? 10), 12);
-
-  console.log(`[autogen:${reqId}] request.body`, {
-    language,
-    hasDefinitions: !!Object.keys(definitions).length,
-    maxSections,
-    templateId: b.templateId ?? null,
-    themeKey: b.themeKey ?? null,
-    forcedSectionsCount: Array.isArray(b.forcedSections) ? b.forcedSections.length : 0,
-  });
 
   if (!Object.keys(definitions).length) {
     return NextResponse.json({ error: "Missing definitions" }, { status: 400 });
@@ -664,11 +718,15 @@ export async function POST(
       : clean(onboarding?.templateId) || null;
 
   const themeKey = (b.themeKey ?? null) as ThemeKey | null;
+
+  // ✅ theme, které chceme okamžitě poslat klientovi
   const theme_json = resolveTheme(themeKey);
+
+  // ✅ tohle UI očekává (camelCase)
+  const theme = mapThemeJson(theme_json);
 
   const supabase = await supabaseServer();
 
-  // 1) find project by id
   const { data: projectById } = await supabase
     .from("projects")
     .select("id, workspace_id, name")
@@ -678,7 +736,6 @@ export async function POST(
   let project: { id: string; workspace_id: string; name: string } | null =
     projectById ?? null;
 
-  // 2) or by slug
   if (!project) {
     const { data: projectBySlug } = await supabase
       .from("projects")
@@ -694,7 +751,6 @@ export async function POST(
     return NextResponse.json({ error: "Project not found" }, { status: 404 });
   }
 
-  // 3) find/create page
   const { data: existing } = await supabase
     .from("pages")
     .select("id")
@@ -740,7 +796,6 @@ export async function POST(
     }
 
     pageId = created!.id as string;
-    console.log(`[autogen:${reqId}] page_created`, { pageId });
   } else {
     const { error: upErr } = await supabase
       .from("pages")
@@ -755,14 +810,11 @@ export async function POST(
       console.log(`[autogen:${reqId}] page_update_failed`, { error: upErr.message });
       return NextResponse.json({ error: upErr.message }, { status: 500 });
     }
-
-    console.log(`[autogen:${reqId}] page_updated`, { pageId });
   }
 
-  // 4) pick sections (priority: template preset -> forcedSections -> picker)
+  // 4) pick sections
   let picked: string[] = [];
 
-  // 4A) template preset exact order
   if (templateId) {
     const preset = getPreset(templateId);
     if (preset?.sections?.length) {
@@ -770,23 +822,15 @@ export async function POST(
     }
   }
 
-  // 4B) forced sections (explicit request)
   if (!picked.length && forcedSections?.length) {
     picked = forcedSections.filter((s) => definitions[s]);
   }
 
-  // 4C) fallback picker
   if (!picked.length) {
     picked = pickTypes(desc, definitions, maxSections);
   }
 
   picked = picked.slice(0, maxSections);
-
-  console.log(`[autogen:${reqId}] sections_picked`, {
-    templateId,
-    pickedCount: picked.length,
-    picked,
-  });
 
   if (!picked.length) {
     const available = Object.keys(definitions);
@@ -804,7 +848,7 @@ export async function POST(
     );
   }
 
-  // 5) generate sections (parallel) + fallback warnings
+  // 5) generate sections
   const warnings: Array<{ type: string; warning: string }> = [];
 
   const sections: GeneratedSection[] = await Promise.all(
@@ -820,10 +864,7 @@ export async function POST(
         onboarding,
       });
 
-      if (warning) {
-        warnings.push({ type, warning });
-        console.log(`[autogen:${reqId}] section_fallback`, { type, warning });
-      }
+      if (warning) warnings.push({ type, warning });
 
       return {
         id: nanoid(),
@@ -835,8 +876,8 @@ export async function POST(
     })
   );
 
-  // ✅ IMPORTANT: patch header nav to use REAL generated section IDs
   patchHeaderNav(sections);
+  patchCtas(sections, onboarding); // ✅ UPDATED: onboarding-aware CTA patching (header too)
 
   // 6) save draft_json
   const draftDoc: DraftDoc = { version: 1, sections };
@@ -846,15 +887,17 @@ export async function POST(
     .eq("id", pageId!);
 
   if (uErr) {
-    console.log(`[autogen:${reqId}] save_failed`, { error: uErr.message });
     return NextResponse.json({ error: uErr.message }, { status: 500 });
   }
 
-  console.log(`[autogen:${reqId}] done`, {
-    pageId,
-    sectionsCount: sections.length,
-    warningsCount: warnings.length,
-  });
-
-  return NextResponse.json({ ok: true, pageId, sections, warnings }, { status: 200 });
+  // ✅ DŮLEŽITÉ: vrať i theme_json => klient ho nastaví okamžitě (bez flash)
+  return NextResponse.json(
+    { ok: true, pageId, sections, theme, warnings },
+    {
+      status: 200,
+      headers: {
+        "Cache-Control": "no-store, max-age=0",
+      },
+    }
+  );
 }

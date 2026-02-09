@@ -9,10 +9,7 @@ import { Maximize2 } from "lucide-react";
 import type { BlockInstance } from "@/types/builder";
 import type { DesignSystem } from "@/types/design-system";
 
-import {
-  BlockRegistry,
-  getModuleByType,
-} from "@/components/builder/BlockRegistry";
+import { BlockRegistry, getModuleByType } from "@/components/builder/BlockRegistry";
 import OnboardingPreviewIframeGrid from "@/components/builder/OnboardingPreviewIframeGrid";
 import { listModules } from "@/sections/registry";
 
@@ -21,82 +18,82 @@ import { listModules } from "@/sections/registry";
 ========================================================= */
 
 export type ThemeKey = "blacky" | "whitey";
+export type PresetGroup = "it_design" | "marketing" | "finance";
 
 export type TemplatePreset = {
   id: string;
   name: string;
   subtitle: string;
+  group: PresetGroup;
+  themeKey: ThemeKey; // ✅ FIXED theme per preset (no i%2)
   sections: string[]; // module IDs e.g. "ab001", "hd001"
 };
 
 export const TEMPLATE_PRESETS: TemplatePreset[] = [
+  // ===== GROUP: IT / Design =====
   {
     id: "t001",
-    name: "Portfolio Proof",
-    subtitle: "Showroom + stats + služby",
-    sections: [
-      "hd001",
-      "h002",
-      "st002",
-      "sh001",
-      "st001",
-      "ab001",
-      "ab002",
-      "sv001",
-      "ts001",
-      "ct001",
-    ],
+    group: "it_design",
+    themeKey: "blacky",
+    name: "Dev / Design Portfolio",
+    subtitle: "Carousel hero + galerie projektů + proof",
+    sections: ["hd001", "h002", "sh003", "st002", "ab001", "ab002", "sv001", "ts001", "ct001"],
   },
   {
     id: "t002",
-    name: "Agency Conversion",
-    subtitle: "Služby-first + social proof",
-    sections: [
-      "hd001",
-      "h002",
-      "st002",
-      "sv002",
-      "st001",
-      "ab001",
-      "ab002",
-      "sh002",
-      "ts002",
-      "ct001",
-    ],
+    group: "it_design",
+    themeKey: "whitey",
+    name: "Dev / Design Portfolio (Light)",
+    subtitle: "Stejná struktura v bílém designu",
+    sections: ["hd001", "h002", "sh003", "st002", "ab001", "ab002", "sv001", "ts001", "ct001"],
   },
+
+  // ===== GROUP: Marketing / Copy =====
   {
     id: "t003",
-    name: "Personal Brand",
-    subtitle: "About-first + důvěra + CTA",
-    sections: ["hd001", "h002", "ab001", "ab002", "st001", "ts001", "sv001", "sh001", "ct001"],
+    group: "marketing",
+    themeKey: "blacky",
+    name: "Marketing / Copywriter",
+    subtitle: "Text hero + projekty s odkazy + konverzní flow",
+    sections: ["hd001", "h001", "sh001", "st002", "ab001", "ab002", "sv001", "ts001", "ct001"],
   },
   {
     id: "t004",
-    name: "Service Focus",
-    subtitle: "Služby + výsledky + CTA",
-    sections: ["hd001", "h002", "sv001", "sv002", "st002", "st001", "ts001", "ct001"],
+    group: "marketing",
+    themeKey: "whitey",
+    name: "Marketing / Copywriter (Light)",
+    subtitle: "Stejná struktura v bílém designu",
+    sections: ["hd001", "h001", "sh001", "st002", "ab001", "ab002", "sv001", "ts001", "ct001"],
   },
+
+  // ===== GROUP: Finance / RE / Admin / Edu =====
   {
     id: "t005",
-    name: "Results & Proof",
-    subtitle: "Stats-heavy + proof + CTA",
-    sections: ["hd001", "h002", "st002", "st001", "ts002", "ab001", "sv001", "ct001"],
+    group: "finance",
+    themeKey: "blacky",
+    name: "Finance / Real Estate",
+    subtitle: "Důvěra přes čísla + detailní služby",
+    sections: ["hd001", "h001", "st002", "sv002", "ab001", "ab002", "ts001", "ct001"],
   },
   {
     id: "t006",
-    name: "Visual Creator",
-    subtitle: "Showroom-first vibe",
-    sections: ["hd001", "h002", "sh002", "st001", "ab001", "sv001", "ts002", "ct001"],
+    group: "finance",
+    themeKey: "whitey",
+    name: "Finance / Real Estate (Light)",
+    subtitle: "Stejná struktura v bílém designu",
+    sections: ["hd001", "h001", "st002", "sv002", "ab001", "ab002", "ts001", "ct001"],
   },
 ];
+
 
 /* =========================================================
    Themes (DesignSystem)  ✅ camelCase runtime
 ========================================================= */
 
-// onboarding themes (updated for new DS vars)
+// updated onboarding theme presets (DB shape = snake_case)
+// ✅ adds: inverse_surface, input, border
 
-const THEME_BLACKY: DesignSystem = {
+export const THEME_BLACKY = {
   body: "#d4d4d8",
   font: "system",
   heading: "#ffffff",
@@ -116,39 +113,41 @@ const THEME_BLACKY: DesignSystem = {
   border: "#27272a",
 
   onPrimary: "#000000",
+  onSurface: "#000000",
   onSecondary: "#ffffff",
   onBackground: "#ffffff",
-  onSurface: "#000000",
 
   borderRadius: 16,
-} as any;
+} as const;
 
-const THEME_WHITEY: DesignSystem = {
-  body: "#09090b",
+export const THEME_WHITEY = {
+  body: "#0a0a0a",
   font: "system",
-  heading: "#09090b",
+  heading: "#0a0a0a",
 
-  primary: "#09090b",
+  primary: "#0a0a0a",
   primaryHover: "#18181b",
 
   secondary: "#ffffff",
   secondaryHover: "#f4f4f5",
 
   background: "#ffffff",
-  surface: "#ffffff",
+  surface: "#0a0a0a",
 
   // ✅ NEW
-  inverseSurface: "#09090b",
+  inverseSurface: "#0a0a0a",
   input: "#ffffff",
   border: "#e4e4e7",
 
   onPrimary: "#ffffff",
-  onSecondary: "#09090b",
-  onBackground: "#09090b",
-  onSurface: "#09090b",
+  onSurface: "#ffffff",
+  onSecondary: "#0a0a0a",
+  onSackground: "#0a0a0a",
 
   borderRadius: 16,
-} as any;
+} as const;
+
+
 
 
 function getThemeByKey(k: ThemeKey): DesignSystem {
@@ -200,10 +199,53 @@ function buildBlocksFromTypes(templateId: string, keys: string[]): BlockInstance
   });
 }
 
+function resolveGroupFromPrimaryFocus(primaryFocus?: string): PresetGroup {
+  const f = (primaryFocus || "").toLowerCase();
+
+  // IT / design / visual creators
+  if (
+    f.includes("it") ||
+    f.includes("vývoj") ||
+    f.includes("vyvoj") ||
+    f.includes("design") ||
+    f.includes("grafika") ||
+    f.includes("video") ||
+    f.includes("foto") ||
+    f.includes("fitness")
+  ) {
+    return "it_design";
+  }
+
+  // Marketing / growth / copy / consulting
+  if (
+    f.includes("marketing") ||
+    f.includes("růst") ||
+    f.includes("rust") ||
+    f.includes("copy") ||
+    f.includes("poraden")
+  ) {
+    return "marketing";
+  }
+
+  // Finance / admin / real estate / education
+  if (
+    f.includes("finance") ||
+    f.includes("nemovit") ||
+    f.includes("administr") ||
+    f.includes("vzděl") ||
+    f.includes("vzdel")
+  ) {
+    return "finance";
+  }
+
+  return "it_design";
+}
+
 type OnboardingTemplateStepProps = {
   payload?: {
     name?: string;
     primaryFocus?: string;
+    service?: string;
     idealCustomer?: string;
     mainProblem?: string;
     avoidCustomer?: string;
@@ -211,6 +253,7 @@ type OnboardingTemplateStepProps = {
     toneOfVoice?: string;
     brag?: string;
     websiteGoal?: string;
+    externalUrl?: string;
   };
 
   templateId: string;
@@ -219,7 +262,6 @@ type OnboardingTemplateStepProps = {
   themeKey: ThemeKey;
   setThemeKey: (k: ThemeKey) => void;
 
-  /** ✅ nový */
   isGenerating?: boolean;
 
   /** ✅ nový: spustí generování okamžitě po výběru */
@@ -317,19 +359,51 @@ export default function OnboardingTemplateStep({
   onConfirmTemplate,
 }: OnboardingTemplateStepProps) {
   const cards = useMemo(() => {
-    return TEMPLATE_PRESETS.map((p, i) => {
-      const tk: ThemeKey = i % 2 === 0 ? "blacky" : "whitey";
-      const theme = getThemeByKey(tk);
+    const recommendedGroup = resolveGroupFromPrimaryFocus(payload?.primaryFocus);
+  
+    const groupOrder: PresetGroup[] = [
+      recommendedGroup,
+      ...(["it_design", "marketing", "finance"] as PresetGroup[]).filter((g) => g !== recommendedGroup),
+    ];
+  
+// ✅ zachovej páry: vždy blacky -> whitey (na střídačku) + držet páry pohromadě
+const ordered = groupOrder.flatMap((g) => {
+  const withinGroup = TEMPLATE_PRESETS.filter((p) => p.group === g);
 
+  const getPairIndex = (id: string) => {
+    // t001 -> 1, t002 -> 2 ... (nebo cokoli číselného)
+    const n = Number(id.replace(/[^\d]/g, ""));
+    return Number.isFinite(n) ? Math.floor((n - 1) / 2) : 9999;
+  };
+
+  return withinGroup.sort((a, b) => {
+    const ap = getPairIndex(a.id);
+    const bp = getPairIndex(b.id);
+    if (ap !== bp) return ap - bp; // nejdřív pár (t001+t002), pak (t003+t004)...
+
+    const at = a.themeKey === "blacky" ? 0 : 1;
+    const bt = b.themeKey === "blacky" ? 0 : 1;
+    if (at !== bt) return at - bt; // v rámci páru vždy blacky -> whitey
+
+    return 0;
+  });
+});
+
+  
+    return ordered.map((p) => {
+      const tk = p.themeKey;
+      const theme = getThemeByKey(tk);
+  
       const pageBgClass = tk === "whitey" ? "bg-white" : "bg-zinc-950";
       const iframeTheme = tk === "whitey" ? "light" : "dark";
-
+  
       const baseBlocks = buildBlocksFromTypes(p.id, p.sections);
       const blocks = baseBlocks.map((b) => personalizeBlock(b, payload));
-
-      return { ...p, blocks, themeKey: tk, theme, pageBgClass, iframeTheme };
+  
+      return { ...p, blocks, theme, pageBgClass, iframeTheme };
     });
   }, [payload]);
+  
 
   const [fullPreviewId, setFullPreviewId] = useState<string | null>(null);
   const [isMounted, setIsMounted] = useState(false);
@@ -363,7 +437,6 @@ export default function OnboardingTemplateStep({
     onConfirmTemplate?.(id, tk);
   };
 
-  // ✅ žádná default vybraná šablona: když něco nesedí, nedáváme fallback na cards[0]
   const modalCard = useMemo(() => {
     if (!fullPreviewId) return null;
     return cards.find((c) => c.id === fullPreviewId) ?? null;
@@ -410,17 +483,14 @@ export default function OnboardingTemplateStep({
 
                   {/* Hover overlay */}
                   <div
-  className={cx(
-    "absolute inset-0 z-[20] flex items-center justify-center",
-    // ✅ mobile: always visible + clickable
-    "opacity-100 pointer-events-auto",
-    // ✅ desktop: only on hover
-    "md:opacity-0 md:pointer-events-none md:group-hover:opacity-100 md:group-hover:pointer-events-auto",
-    "transition-opacity duration-200"
-  )}
->
-
-                    <div className="absolute inset-0 bg-black/55 backdrop-blur-md rounded-2xl" />
+                    className={cx(
+                      "absolute inset-0 z-[20] flex items-center justify-center",
+                      "opacity-100 pointer-events-auto",
+                      "md:opacity-0 md:pointer-events-none md:group-hover:opacity-100 rounded-2xl bg-black/55 backdrop-blur-md md:group-hover:pointer-events-auto",
+                      "transition-opacity duration-200"
+                    )}
+                  >
+                    <div className="absolute inset-0 transition-opacity duration-200  rounded-2xl" />
 
                     <div className="relative z-[30] flex items-center gap-3">
                       <motion.button
@@ -429,7 +499,7 @@ export default function OnboardingTemplateStep({
                         onClick={() => confirmTemplate(t.id, t.themeKey)}
                         disabled={isGenerating}
                         className={cx(
-                          "h-12 rounded-2xl px-6 text-[14px] font-semibold transition",
+                          "h-12 rounded-2xl px-6 text-[14px] cursor-pointer font-semibold transition",
                           "shadow-[0_10px_30px_rgba(0,0,0,0.35)]",
                           isGenerating
                             ? "bg-white/30 text-white/70 cursor-not-allowed"
@@ -447,7 +517,7 @@ export default function OnboardingTemplateStep({
                         onClick={() => !isGenerating && setFullPreviewId(t.id)}
                         disabled={isGenerating}
                         className={cx(
-                          "h-12 w-12 rounded-2xl grid place-items-center transition",
+                          "h-12 w-12 rounded-2xl cursor-pointer grid place-items-center transition",
                           "border border-white/15 bg-white/10 text-white hover:bg-white/15",
                           "shadow-[0_10px_30px_rgba(0,0,0,0.35)]",
                           isGenerating && "opacity-60 cursor-not-allowed"

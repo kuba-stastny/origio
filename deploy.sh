@@ -61,6 +61,9 @@ ssh "$SERVER" "bash -lc '
   command -v node >/dev/null 2>&1 || { echo \"❌ Node není dostupný (NVM se nenačetlo)\"; exit 1; }
   command -v pm2  >/dev/null 2>&1 || { echo \"❌ PM2 není dostupný (nainstaluj: npm i -g pm2)\"; exit 1; }
 
+  # ✅ Omez Node paměť (pomáhá proti CPU spike / false-positive ochraně)
+  export NODE_OPTIONS=\"--max-old-space-size=512\"
+
   # zajistit PORT v .env
   if [ -f \"'$APP_DIR'/.env\" ]; then
     grep -q \"^PORT=\" \"'$APP_DIR'/.env\" || echo \"PORT='$PORT'\" >> \"'$APP_DIR'/.env\"
@@ -69,14 +72,28 @@ ssh "$SERVER" "bash -lc '
   fi
 
   if pm2 describe \"'$APP_NAME'\" >/dev/null 2>&1; then
+    # ✅ restart s novým env (NODE_OPTIONS)
+    pm2 restart \"'$APP_NAME'\" --update-env
+
+    # ✅ (volitelné, ale doporučené) nastav max-memory-restart i pro existující proces
+    pm2 set pm2:autodump true >/dev/null 2>&1 || true
     pm2 restart \"'$APP_NAME'\" --update-env
   else
     cd \"'$APP_DIR'\"
-    pm2 start \"'$APP_DIR'/standalone/server.js\" --name \"'$APP_NAME'\" --cwd \"'$APP_DIR'/standalone\" --env production
-    pm2 save
+
+    # ✅ Start standalone serveru přes node a s limitem paměti
+    pm2 start \"'$APP_DIR'/standalone/server.js\" \
+      --name \"'$APP_NAME'\" \
+      --cwd \"'$APP_DIR'/standalone\" \
+      --max-memory-restart 650M
+
   fi
 
+  # ✅ Uložit PM2 stav (persist po rebootu)
+  pm2 save
+
   pm2 status \"'$APP_NAME'\"
+  pm2 show \"'$APP_NAME'\" | sed -n \"1,120p\"
 '"
 
 echo "✅ Hotovo. Nasazeno!"

@@ -211,69 +211,72 @@ export default async function Page({ params }: { params: Params }) {
 
       <BodyTheme theme={data.page.theme} />
 
-      {/* badge */}
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 p-5 z-[2000] sm:left-auto sm:right-0 sm:translate-x-0">
-        <a
-          href="https://origio.site"
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Vytvořeno v Origio"
-          className="block"
-        >
-          <div
-            className={[
-              'group relative overflow-hidden',
-              'rounded-2xl px-4 py-2',
-              'flex items-center gap-2',
-              // mobil: široké, centrované
-              'w-[calc(100vw-40px)] max-w-[520px] justify-center',
-              // desktop: fit-content vpravo
-              'sm:w-auto sm:max-w-none sm:justify-start',
-              // glass
-              'bg-white/12 dark:bg-white/6',
-              'backdrop-blur-xl',
-              'border border-white/15 dark:border-white/10',
-              // depth
-              'shadow-[0_10px_30px_rgba(0,0,0,0.18)]',
-              // typography
-              'text-sm text-white/90',
-              // interaction
-              'transition-all duration-200',
-              'hover:bg-white/16 hover:shadow-[0_14px_40px_rgba(0,0,0,0.22)]',
-              'active:scale-[0.99]',
-              'cursor-pointer',
-            ].join(' ')}
-          >
-            {/* specular highlight */}
-            <div className="pointer-events-none absolute inset-0">
-              <div className="absolute -top-10 left-1/2 h-24 w-[140%] -translate-x-1/2 rotate-[-6deg] bg-gradient-to-b from-white/25 to-transparent blur-xl" />
-              <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/10" />
-            </div>
+  {/* badge */}
+<div className="fixed bottom-0 left-1/2 -translate-x-1/2 p-5 z-[2000] sm:left-auto sm:right-0 sm:translate-x-0">
+  <a
+    href="https://origio.site"
+    target="_blank"
+    rel="noopener noreferrer"
+    aria-label="Vytvořeno v Origio"
+    className="block"
+  >
+    <div
+      className={[
+        "group relative overflow-hidden",
+        "rounded-2xl px-4 py-2",
+        "flex items-center gap-2",
+        // mobil: široké, centrované
+        "w-[calc(100vw-40px)] max-w-[520px] justify-center",
+        // desktop: fit-content vpravo
+        "sm:w-auto sm:max-w-none sm:justify-start",
 
-            {/* content */}
-            <div className="relative z-10 flex items-center gap-2">
-              <div className="h-6 w-6 rounded-xl bg-white/14 border border-white/15 flex items-center justify-center overflow-hidden">
-                <img
-                  className="h-4 w-4"
-                  src="https://app.origio.site/images/logo2.png"
-                  alt="Origio"
-                  draggable={false}
-                />
-              </div>
+        // ✅ DARK glass (lepší na bílém podkladu)
+        "bg-black/55",
+        "backdrop-blur-xl",
+        "border border-white/10",
+        "shadow-[0_12px_34px_rgba(0,0,0,0.35)]",
 
-              <span className="text-white/80">vytvořeno v</span>
-              <span className="font-semibold tracking-tight text-white">
-                origio.site
-              </span>
-            </div>
+        // typography
+        "text-sm text-white/90",
 
-            {/* glow */}
-            <div className="pointer-events-none absolute -inset-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(255,255,255,0.20),transparent_45%)]" />
-            </div>
-          </div>
-        </a>
+        // interaction
+        "transition-all duration-200",
+        "hover:bg-black/65 hover:shadow-[0_16px_44px_rgba(0,0,0,0.42)]",
+        "active:scale-[0.99]",
+        "cursor-pointer",
+      ].join(" ")}
+    >
+      {/* specular highlight (tmavší, aby nerušil) */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-10 left-1/2 h-24 w-[140%] -translate-x-1/2 rotate-[-6deg] bg-gradient-to-b from-white/14 to-transparent blur-xl" />
+        <div className="absolute inset-0 bg-gradient-to-br from-white/8 via-transparent to-black/25" />
       </div>
+
+      {/* content */}
+      <div className="relative z-10 flex items-center gap-2">
+        <div className="h-6 w-6 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center overflow-hidden">
+          <img
+            className="h-4 w-4"
+            src="https://app.origio.site/images/logo2.png"
+            alt="Origio"
+            draggable={false}
+          />
+        </div>
+
+        <span className="text-white/70">vytvořeno v</span>
+        <span className="font-semibold tracking-tight text-white">
+          origio.site
+        </span>
+      </div>
+
+      {/* glow (jemnější, aby nezesvětloval moc) */}
+      <div className="pointer-events-none absolute -inset-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(255,255,255,0.14),transparent_45%)]" />
+      </div>
+    </div>
+  </a>
+</div>
+
     </main>
   );
 }

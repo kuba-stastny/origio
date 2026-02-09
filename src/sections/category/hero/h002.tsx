@@ -101,11 +101,11 @@ function HeroRenderer({ block, theme }: HeroRendererProps) {
 
   return (
     <SectionShell theme={resolvedTheme} className="relative overflow-hidden">
-      <div className="relative mx-auto">
+      <div className="relative mx-auto pt-10">
         {variant === "left" && (
           <>
             {/* ✅ TITLE: split words + translateY blur fade (viewport once) */}
-            <div className="max-w-5xl">
+            <div className="max-w-7xl">
               <Display className="tracking-[-0.02em] text-[color:var(--ds-heading)]">
                 <CinematicSplitWords
                   text={data.heading ?? ""}

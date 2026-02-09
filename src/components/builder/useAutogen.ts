@@ -4,11 +4,12 @@
 import { useBuilderStore } from "@/store/builder-store";
 import { nanoid } from "@/utils/ids";
 import { BlockRegistry } from "@/components/builder/BlockRegistry";
+import type { DesignSystem } from "@/types/design-system";
 
 /**
  * Autogen hook
  * - POST /api/v1/projects/:projectId/autogen
- * - ukládá pageId + sections do builder store
+ * - ukládá pageId + sections + theme do builder store (ATOMICKY)
  * - animuje progress + phase
  */
 
@@ -36,15 +37,53 @@ export type OnboardingV1 = {
   templateId?: string;
 };
 
-type Definitions = Record<string, { version: number; defaultData: any; title?: string }>;
+type Definitions = Record<
+  string,
+  { version: number; defaultData: any; title?: string }
+>;
+
+function assertTheme(theme: any): asserts theme is DesignSystem {
+  if (!theme || typeof theme !== "object") {
+    throw new Error("Autogen nevrátil theme (DesignSystem).");
+  }
+
+  const must = (k: string) => {
+    if (typeof theme[k] !== "string" || theme[k].trim() === "") {
+      throw new Error(`Theme je nekompletní – chybí "${k}".`);
+    }
+  };
+
+  // Bez fallbacků: vyžadujeme vše
+  must("primary");
+  must("primaryHover");
+  must("secondary");
+  must("secondaryHover");
+  must("background");
+  must("surface");
+  must("inverseSurface");
+  must("input");
+  must("border");
+  must("onPrimary");
+  must("onSecondary");
+  must("onBackground");
+  must("onSurface");
+  must("heading");
+  must("body");
+  must("font");
+
+  if (typeof theme.borderRadius !== "number") {
+    throw new Error(`Theme je nekompletní – "borderRadius" musí být number.`);
+  }
+}
 
 export function useAutogen(_workspaceId: string, projectId: string) {
   const setGenerating = useBuilderStore((s) => s.setPageGenerating);
   const setProgress = useBuilderStore((s) => s.setPageProgress);
   const setPhase = useBuilderStore((s) => s.setPagePhase);
-  const replaceSections = useBuilderStore((s) => s.replaceSections);
   const resetProgress = useBuilderStore((s) => s.resetProgress);
-  const setPageId = useBuilderStore((s) => s.setPageId);
+
+  // ✅ nový atomický setter ze store
+  const loadInitialFull = useBuilderStore((s) => s.loadInitialFull);
 
   async function run(payload: {
     onboarding: OnboardingV1;
@@ -107,7 +146,6 @@ export function useAutogen(_workspaceId: string, projectId: string) {
     for (const key of availableTypes) {
       const def: any = (BlockRegistry as any)[key];
 
-      // title může být buď přímo na definici, nebo uvnitř definition (podle toho jak to máš zorganizované)
       const title =
         def?.title ??
         def?.definition?.title ??
@@ -117,7 +155,7 @@ export function useAutogen(_workspaceId: string, projectId: string) {
       definitions[key] = {
         version: def?.version ?? 1,
         defaultData: def?.defaultData ?? {},
-        title: title || key, // ✅ fallback
+        title: title || key, // fallback jen pro title, ne pro theme
       };
     }
 
@@ -130,19 +168,15 @@ export function useAutogen(_workspaceId: string, projectId: string) {
           definitions,
           maxSections: payload.maxSections ?? 10,
 
-          // NEW: onboarding payload (server z toho skládá brief)
           onboarding: payload.onboarding,
 
-          // NEW: template + theme
           templateId: payload.templateId ?? payload.onboarding?.templateId ?? null,
           themeKey: payload.themeKey ?? null,
 
-          // NEW: fixní sekce (pořadí)
           forcedSections: Array.isArray(payload.forcedSections)
             ? payload.forcedSections
             : null,
 
-          // optional meta
           persona: payload.persona ?? null,
           version: payload.version ?? 1,
         }),
@@ -158,20 +192,26 @@ export function useAutogen(_workspaceId: string, projectId: string) {
         ? String(json.pageId)
         : undefined;
 
-      const sections = Array.isArray(json?.sections) ? json.sections : [];
+      if (!returnedPageId) {
+        throw new Error("Autogen nevrátil pageId.");
+      }
 
-      // ✅ dorovnej id + (kdyby server neposlal title, dopočti z definitions)
+      const sections = Array.isArray(json?.sections) ? json.sections : [];
+      const theme = json?.theme;
+
+      // ✅ Bez fallbacků: theme musí existovat a být kompletní
+      assertTheme(theme);
+
+      // ✅ dorovnej id + title
       sections.forEach((s: any) => {
         if (!s.id) s.id = nanoid();
-
         if (!s.title && s.type && definitions[s.type]?.title) {
           s.title = definitions[s.type]?.title;
         }
       });
 
-      // >>> DŮLEŽITÉ: propsat do store
-      if (returnedPageId) setPageId(returnedPageId);
-      replaceSections(sections);
+      // ✅ ATOMICKY: pageId + sections + theme v jednom kroku (žádný flash)
+      loadInitialFull(returnedPageId, sections, theme);
 
       setPhase("Dokončuji…");
       currentTarget = 0.95;

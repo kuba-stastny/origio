@@ -143,7 +143,7 @@ export const SECTION_META: SectionMeta[] = [
     aiHint:
       "3 recenze fiktivních klientů vedle sebe, každá obsahuje: rating, quote a author (name, role, avatar)",
     note:
-      "Napiš 3 krátké klientské recenze pro web freelancera. Text má být autentický a konkrétní, ne marketingový, maximálně 130 znaků. Vždy popiš: konkrétní problém klienta, průběh spolupráce a výsledek. Nenápadně zmiň některé služby, které klient využil, spolupráce byla vždy nakonec úspěšná. Vyhni se obecným frázím a přehnanému nadšení, ať je to relaistické. Reference musí znít lidsky a konkrétně (co se zlepšilo). Ke každé recenzi vždy vymysli jméno osoby píšící recenzi ('name'), její pracovní pozici ('role') - ideálně poodbnou lidem z 'idealCustomer' z onboardingu. 'avatar' bude obashovat profilový obrázek klienta. 'rating' bude vždy 5 z 5.",
+      "Napiš 3 krátké klientské recenze pro web freelancera. Text má být autentický a konkrétní, ne marketingový, maximálně 130 znaků. Vždy popiš: konkrétní problém klienta, průběh spolupráce a výsledek. Nenápadně zmiň některé služby, které klient využil, spolupráce byla vždy nakonec úspěšná. Vyhni se obecným frázím a přehnanému nadšení, ať je to relaistické. Reference musí znít lidsky a konkrétně (co se zlepšilo). Ke každé recenzi vždy vymysli jméno osoby píšící recenzi ('name'), její pracovní pozici ('role') - ideálně poodbnou lidem z 'idealCustomer' z onboardingu. 'avatar' bude obashovat profilový obrázek klienta. 'rating' bude vždy 5 z 5. Nevymšlej pod jménem za pozici firmu @nazevfirmy, pod jménem bude jenom název pozice bez názvu firmy.",
   },
   {
     id: "ts002",
@@ -152,7 +152,7 @@ export const SECTION_META: SectionMeta[] = [
     aiHint:
       "carousel 3 recenzí fiktivních klientů, každá obsahuje: rating, quote a author (name, role, avatar)",
     note:
-      "Napiš 3 krátké klientské recenze pro web freelancera. Text má být autentický a konkrétní, ne marketingový, maximálně 130 znaků. Vždy popiš: konkrétní problém klienta, průběh spolupráce a výsledek. Nenápadně zmiň některé služby, které klient využil, spolupráce byla vždy nakonec úspěšná. Vyhni se obecným frázím a přehnanému nadšení, ať je to relaistické. Reference musí znít lidsky a konkrétně (co se zlepšilo). Ke každé recenzi vždy vymysli jméno osoby píšící recenzi ('name'), její pracovní pozici ('role') - ideálně poodbnou lidem z 'idealCustomer' z onboardingu. 'avatar' bude obashovat profilový obrázek klienta. 'rating' bude vždy 5 z 5.",
+      "Napiš 3 krátké klientské recenze pro web freelancera. Text má být autentický a konkrétní, ne marketingový, maximálně 130 znaků. Vždy popiš: konkrétní problém klienta, průběh spolupráce a výsledek. Nenápadně zmiň některé služby, které klient využil, spolupráce byla vždy nakonec úspěšná. Vyhni se obecným frázím a přehnanému nadšení, ať je to relaistické. Reference musí znít lidsky a konkrétně (co se zlepšilo). Ke každé recenzi vždy vymysli jméno osoby píšící recenzi ('name'), její pracovní pozici ('role') - ideálně poodbnou lidem z 'idealCustomer' z onboardingu. 'avatar' bude obashovat profilový obrázek klienta. 'rating' bude vždy 5 z 5. Nevymšlej pod jménem za pozici firmu @nazevfirmy, pod jménem bude jenom název pozice bez názvu firmy.",
   },
   {
     id: "sh001",

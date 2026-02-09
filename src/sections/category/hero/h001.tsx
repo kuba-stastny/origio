@@ -186,10 +186,10 @@ function HeroGalleryRenderer({ block, theme }: HeroGalleryRendererProps) {
 
   return (
     <SectionShell theme={resolvedTheme} className="relative overflow-hidden">
-      <div className="relative mx-auto">
+      <div className="relative mx-auto pt-10">
           <>
             {/* ✅ TITLE: split words + translateY blur fade (viewport once) */}
-            <div className="max-w-5xl mx-auto">
+            <div className="max-w-7xl mx-auto">
               <Display className="!text-center">
                 <CinematicSplitWords
                   text={data.heading ?? ""}
@@ -226,13 +226,13 @@ function HeroGalleryRenderer({ block, theme }: HeroGalleryRendererProps) {
                 delay={0.06}
               >
                 {showPrimary && (
-                  <a href={toHref(data.ctaPrimary?.href)} className="inline-flex">
+                  <a href={toHref(data.ctaPrimary?.href)} className="inline-flex w-full md:w-auto">
                     <Button variant="primary">{data.ctaPrimary?.label}</Button>
                   </a>
                 )}
 
                 {showSecondary && (
-                  <a href={toHref(data.ctaSecondary?.href)} className="inline-flex">
+                  <a href={toHref(data.ctaSecondary?.href)} className="inline-flex w-full md:w-auto">
                     <Button
                       variant="secondary"
                       className="border border-[--ds-primary]"

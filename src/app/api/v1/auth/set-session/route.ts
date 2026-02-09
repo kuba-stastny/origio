@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { NextRequest, NextResponse } from "next/server";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
 function makeClient(req: NextRequest, res: NextResponse) {
   return createServerClient(
@@ -14,7 +14,7 @@ function makeClient(req: NextRequest, res: NextResponse) {
           res.cookies.set({ name, value, ...options });
         },
         remove(name: string, options: CookieOptions) {
-          res.cookies.set({ name, value: '', ...options, maxAge: 0 });
+          res.cookies.set({ name, value: "", ...options, maxAge: 0 });
         },
       },
     }
@@ -23,6 +23,7 @@ function makeClient(req: NextRequest, res: NextResponse) {
 
 export async function POST(req: NextRequest) {
   const res = NextResponse.json({ ok: true });
+  res.headers.set("cache-control", "no-store");
 
   try {
     const supabase = makeClient(req, res);
@@ -33,19 +34,16 @@ export async function POST(req: NextRequest) {
 
     if (!access_token || !refresh_token) {
       return NextResponse.json(
-        { ok: false, error: 'Chybí access_token nebo refresh_token.' },
+        { ok: false, error: "Chybí access_token nebo refresh_token." },
         { status: 400 }
       );
     }
 
-    const { error } = await supabase.auth.setSession({
-      access_token,
-      refresh_token,
-    });
+    const { error } = await supabase.auth.setSession({ access_token, refresh_token });
 
     if (error) {
       return NextResponse.json(
-        { ok: false, error: error.message ?? 'setSession failed' },
+        { ok: false, error: error.message ?? "setSession failed" },
         { status: 401 }
       );
     }
@@ -53,7 +51,7 @@ export async function POST(req: NextRequest) {
     return res;
   } catch (e: any) {
     return NextResponse.json(
-      { ok: false, error: e?.message ?? 'Server error' },
+      { ok: false, error: e?.message ?? "Server error" },
       { status: 500 }
     );
   }

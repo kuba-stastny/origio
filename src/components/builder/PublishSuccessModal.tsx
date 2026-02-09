@@ -58,7 +58,7 @@ export default function PublishSuccessModal({
                 transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
               />
               <motion.div
-                className="absolute -right-28 -top-24 h-52 w-88 rounded-full bg-white blur-3xl mix-blend-screen"
+                className="absolute -right-28 -top-24 h-52 w-88 rounded-full bg-blue-700 blur-3xl mix-blend-screen"
                 animate={{
                   x: [0, -260, -60, -240, 0],
                   y: [0, 18, -12, 16, 0],
@@ -68,7 +68,7 @@ export default function PublishSuccessModal({
                 transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
               />
               <motion.div
-                className="absolute -left-28 -bottom-28 h-56 w-96 rounded-full bg-sky-400 blur-3xl mix-blend-screen"
+                className="absolute -left-28 -bottom-28 h-56 w-96 rounded-full bg-blue-900 blur-3xl mix-blend-screen"
                 animate={{
                   x: [0, 280, 80, 240, 0],
                   y: [0, -20, 12, -16, 0],
@@ -81,14 +81,7 @@ export default function PublishSuccessModal({
               <div className="absolute inset-0 ring-1 ring-white/[0.05]" />
             </div>
 
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Zavřít"
-              className="absolute right-4 top-4 z-10 inline-flex h-10 w-10 items-center justify-center rounded-full bg-zinc-900/50 text-zinc-300 hover:bg-zinc-900/80 hover:text-zinc-50"
-            >
-              <FiX className="h-5 w-5" />
-            </button>
+            
 
             <div className="relative z-10">
               <div className="flex items-start gap-4">
@@ -145,7 +138,6 @@ export default function PublishSuccessModal({
                   onClick={onClose}
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-zinc-950 hover:bg-zinc-200"
                 >
-                  <FiExternalLink className="h-4 w-4" />
                   Otevřít web
                 </a>
               </div>

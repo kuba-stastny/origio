@@ -2,11 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { BsPlus, BsX, BsCardImage } from "react-icons/bs";
-import { FiVideo } from "react-icons/fi";
+import { BsPlus, BsX } from "react-icons/bs";
 import { supabase } from "@/lib/supabase/client";
-
-export type MediaFilter = "all" | "image" | "video";
 
 type StorageFile = {
   name: string;
@@ -25,17 +22,14 @@ type Props = {
   folder?: string;
   maxFiles?: number;
   maxSizeMB?: number;
-  filter?: MediaFilter; // ✅ filter only
-  onFilterChange?: (f: MediaFilter) => void;
 };
 
-function isVideoName(name: string) {
-  return !!name.toLowerCase().match(/\.(mp4|webm|ogg|mov|m4v)$/);
+function isImageName(name: string) {
+  return !!name.toLowerCase().match(/\.(png|jpg|jpeg|webp|avif|gif|svg)$/);
 }
 
-function inferKindFromFile(file: File): "image" | "video" | "other" {
+function inferKindFromFile(file: File): "image" | "other" {
   if (file.type.startsWith("image/")) return "image";
-  if (file.type.startsWith("video/")) return "video";
   return "other";
 }
 
@@ -47,8 +41,6 @@ export default function MediaManager({
   folder = "media",
   maxFiles = 100,
   maxSizeMB = 12,
-  filter = "all",
-  onFilterChange,
 }: Props) {
   const [portalEl, setPortalEl] = useState<HTMLElement | null>(null);
   const [accountId, setAccountId] = useState<string | null>(null);
@@ -98,7 +90,10 @@ export default function MediaManager({
       });
 
       if (error) throw error;
-      setFiles(Array.isArray(data) ? data : []);
+
+      // ✅ keep only images (by extension)
+      const list = Array.isArray(data) ? data : [];
+      setFiles(list.filter((f) => isImageName(f.name)));
     } catch (e: any) {
       console.error("❌ Chyba při načítání souborů:", e);
       setError(e?.message ?? "Nelze načíst soubory.");
@@ -171,7 +166,7 @@ export default function MediaManager({
 
     const k = inferKindFromFile(file);
     if (k === "other") {
-      setError("Podporujeme jen obrázky nebo videa.");
+      setError("Podporujeme jen obrázky.");
       return;
     }
 
@@ -224,11 +219,7 @@ export default function MediaManager({
     if (file) await uploadFile(file);
   };
 
-  const filtered = useMemo(() => {
-    if (filter === "all") return files || [];
-    const wantVideo = filter === "video";
-    return (files || []).filter((f) => (wantVideo ? isVideoName(f.name) : !isVideoName(f.name)));
-  }, [files, filter]);
+  const filtered = useMemo(() => files || [], [files]);
 
   if (!open || !portalEl) return null;
 
@@ -237,10 +228,6 @@ export default function MediaManager({
   const divider = "bg-white/10";
   const softBtn =
     "rounded-full bg-white/8 px-3 py-1.5 text-sm text-zinc-100 transition hover:bg-white/12";
-  const softPill =
-    "inline-flex w-fit rounded-full bg-white/8 p-1 shadow-[0_14px_60px_rgba(0,0,0,0.55)]";
-  const pillBtn =
-    "inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs transition";
   const tile =
     "group relative aspect-square cursor-pointer overflow-hidden rounded-2xl bg-white/6 shadow-[0_16px_60px_rgba(0,0,0,0.55)] transition hover:bg-white/9";
 
@@ -269,7 +256,7 @@ export default function MediaManager({
             <div>
               <div className="text-base font-semibold text-zinc-50">Media manager</div>
               <div className="text-xs text-zinc-300">
-                Přepínač je filtr zobrazení. Nahrát můžeš obrázek i video.
+                Knihovna obrázků (JPG/PNG/WebP/AVIF/GIF/SVG). Přetáhni soubor sem nebo klikni na Nahrát.
               </div>
             </div>
 
@@ -282,48 +269,13 @@ export default function MediaManager({
 
           <div className={"h-px " + divider} />
 
-          {/* Filter + toolbar */}
-          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className={softPill}>
-              <button
-                type="button"
-                onClick={() => onFilterChange?.("all")}
-                className={[
-                  pillBtn,
-                  filter === "all" ? "bg-white/12 text-white" : "text-zinc-300 hover:bg-white/8",
-                ].join(" ")}
-              >
-                Vše
-              </button>
-              <button
-                type="button"
-                onClick={() => onFilterChange?.("image")}
-                className={[
-                  pillBtn,
-                  filter === "image" ? "bg-white/12 text-white" : "text-zinc-300 hover:bg-white/8",
-                ].join(" ")}
-              >
-                <BsCardImage className="h-4 w-4" /> Obrázky
-              </button>
-              <button
-                type="button"
-                onClick={() => onFilterChange?.("video")}
-                className={[
-                  pillBtn,
-                  filter === "video" ? "bg-white/12 text-white" : "text-zinc-300 hover:bg-white/8",
-                ].join(" ")}
-              >
-                <FiVideo className="h-4 w-4" /> Videa
-              </button>
+          {/* Toolbar */}
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <div className="text-xs text-zinc-300">
+              {filtered.length}/{maxFiles} obrázků{uploading ? " • Nahrávám…" : ""}
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="text-xs text-zinc-300">
-                {filtered.length}/{maxFiles}{" "}
-                {filter === "video" ? "videí" : filter === "image" ? "obrázků" : "souborů"}
-                {uploading ? " • Nahrávám…" : ""}
-              </div>
-
               <button onClick={onClickUpload} className={softBtn}>
                 <span className="inline-flex items-center gap-2">
                   <BsPlus /> Nahrát
@@ -332,7 +284,7 @@ export default function MediaManager({
 
               <input
                 type="file"
-                accept="image/*,video/*"
+                accept="image/*"
                 ref={fileInputRef}
                 onChange={(e) => {
                   const f = e.target.files?.[0];
@@ -362,7 +314,7 @@ export default function MediaManager({
             ) : filtered.length === 0 ? (
               <div className="grid h-full place-items-center">
                 <div className="max-w-lg text-center text-sm text-zinc-300">
-                  Zatím nic v knihovně. Nahraj první pomocí{" "}
+                  Zatím nic v knihovně. Nahraj první obrázek pomocí{" "}
                   <span className="text-zinc-50">Nahrát</span> nebo přetáhni soubor sem.
                 </div>
               </div>
@@ -370,7 +322,6 @@ export default function MediaManager({
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
                 {filtered.map((file) => {
                   const url = getPublicUrl(file.name);
-                  const isVid = isVideoName(file.name);
 
                   return (
                     <div
@@ -379,23 +330,8 @@ export default function MediaManager({
                       onClick={() => handleSelect(file)}
                       title={file.name}
                     >
-                      {isVid ? (
-                        <div className="relative h-full w-full bg-black">
-                          <video
-                            src={url}
-                            className="h-full w-full object-cover opacity-90"
-                            muted
-                            playsInline
-                            preload="metadata"
-                          />
-                          <div className="absolute left-2 bottom-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] text-white">
-                            VIDEO
-                          </div>
-                        </div>
-                      ) : (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={url} alt={file.name} className="h-full w-full object-cover" />
-                      )}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={url} alt={file.name} className="h-full w-full object-cover" />
 
                       <button
                         onClick={(e) => {
@@ -435,7 +371,7 @@ export default function MediaManager({
           </div>
 
           <div className="mt-3 text-[11px] text-zinc-300">
-            Tip: video nejbezpečněji MP4 (H.264) nebo WebM. Obrázky klidně WebP/AVIF.
+            Tip: nejlepší je WebP/AVIF (menší velikost), klidně i PNG/JPG.
           </div>
         </div>
       </div>

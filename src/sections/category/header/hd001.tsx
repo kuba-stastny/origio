@@ -200,18 +200,28 @@ function HeaderRenderer({ block, theme }: HeaderRendererProps) {
   // NOTE: SectionShell je <section>, takže ref musí být HTMLElement
   const rootRef = useRef<HTMLElement | null>(null);
 
-  // portal root inside preview document (iframe)
+  /**
+   * ✅ IMPORTANT FIX:
+   * Portal root MUST be inside the SAME SectionShell subtree so CSS vars
+   * (e.g. --ds-bg / --ds-on-bg) are available also for the mobile overlay.
+   *
+   * Before: appended to doc.body  -> lost SectionShell vars
+   * Now:     appended to rootRef  -> shares vars
+   */
   useEffect(() => {
-    if (!rootRef.current) return;
+    const host = rootRef.current;
+    if (!host) return;
 
-    const doc = rootRef.current.ownerDocument || document;
+    const doc = host.ownerDocument || document;
     const el = doc.createElement("div");
-    doc.body.appendChild(el);
+
+    // keep it as last child of the section so vars cascade
+    host.appendChild(el);
     setPortalEl(el);
 
     return () => {
       try {
-        doc.body.removeChild(el);
+        host.removeChild(el);
       } catch {
         // ignore
       }
@@ -281,14 +291,14 @@ function HeaderRenderer({ block, theme }: HeaderRendererProps) {
       <div
         className={[
           "fixed inset-0 z-[9999] md:hidden",
-          "bg-black/80 backdrop-blur-2xl transition-opacity duration-300",
+          "bg-[var(--ds-bg)]/95 backdrop-blur-3xl transition-opacity duration-300",
           mobileOpen
             ? "pointer-events-auto opacity-100"
             : "pointer-events-none opacity-0",
         ].join(" ")}
         aria-hidden={!mobileOpen}
       >
-        <div className="relative flex h-full flex-col px-4 pt-6 pb-10 text-white">
+        <div className="relative flex h-full flex-col px-4 pt-6 pb-10 text-[var(--ds-on-bg)]">
           {/* top row */}
           <div className="mb-10 flex items-center justify-between">
             <div className="flex min-w-0 items-center gap-3">
@@ -319,7 +329,7 @@ function HeaderRenderer({ block, theme }: HeaderRendererProps) {
               className="inline-flex h-10 w-10 items-center justify-center"
               aria-label="Close menu"
             >
-              <BsX className="h-8 w-8 text-white" />
+              <BsX className="h-8 w-8 text-[var(--ds-on-bg)]" />
             </button>
           </div>
 
@@ -380,7 +390,7 @@ function HeaderRenderer({ block, theme }: HeaderRendererProps) {
                   }}
                   className="block"
                 >
-                  <Button variant="primary" className="w-full">
+                  <Button variant="primary" className="rounded-2xl">
                     {cta?.label || "Let's connect"}
                   </Button>
                 </a>
@@ -419,14 +429,14 @@ function HeaderRenderer({ block, theme }: HeaderRendererProps) {
   return (
     <SectionShell
       theme={resolvedTheme}
-      className="p-0! text-[var(--ds-on-bg)]"
+      className="p-0! text-[var(--ds-on-bg)] top-0 left-0 w-full"
       ref={rootRef as any}
     >
       {/* FIXED bar */}
       <div className="fixed left-0 top-0 z-[300] w-full" data-sticky-header>
         {/* gradient strip */}
         <div className="w-full bg-gradient-to-b from-[var(--ds-bg)] to-[var(--ds-bg)]/80">
-          <div className="mx-auto w-full max-w-[1500px] px-0 lg:px-20">
+          <div className="mx-auto w-full max-w-[1500px] px-4 lg:px-20">
             <div className="inline-flex w-full items-center justify-between py-6">
               {/* Left */}
               <div className="flex items-center gap-4 text-[var(--ds-on-bg)]">

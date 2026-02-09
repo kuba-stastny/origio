@@ -1,7 +1,7 @@
 // TopBar.tsx
-"use client";
+'use client';
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   BsExclamationTriangleFill,
   BsCheck2,
@@ -14,17 +14,17 @@ import {
   BsGearWideConnected,
   BsChatDotsFill,
   BsBugFill,
-  BsPencilFill,
+  BsFillPenFill,
   BsBoxArrowUpRight,
-} from "react-icons/bs";
-import { IoLockClosed } from "react-icons/io5";
-import { motion, AnimatePresence } from "framer-motion";
-import { useUiPanel } from "@/store/ui-panel";
-import PublishSuccessModal from "./PublishSuccessModal";
-import { useBuilderStore, type PublishMode } from "@/store/builder-store";
+} from 'react-icons/bs';
+import { IoLockClosed } from 'react-icons/io5';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useUiPanel } from '@/store/ui-panel';
+import PublishSuccessModal from './PublishSuccessModal';
+import { useBuilderStore, type PublishMode } from '@/store/builder-store';
 
-type BusyState = "idle" | "busy" | "success" | "error";
-export type DeviceKey = "desktop" | "mobile";
+type BusyState = 'idle' | 'busy' | 'success' | 'error';
+export type DeviceKey = 'desktop' | 'mobile';
 
 export type TopBarProps = {
   projectId: string;
@@ -41,7 +41,7 @@ const Spinner = () => (
   <motion.span
     className="inline-block align-middle"
     animate={{ rotate: 360 }}
-    transition={{ duration: 0.9, repeat: Infinity, ease: "linear" }}
+    transition={{ duration: 0.9, repeat: Infinity, ease: 'linear' }}
   >
     <svg width="14" height="14" viewBox="0 0 50 50">
       <circle
@@ -65,16 +65,16 @@ const Spinner = () => (
 
 function btnBase(disabled?: boolean) {
   return [
-    "inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm",
-    "focus:outline-none focus:ring-2 focus:ring-offset-0",
-    disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
-  ].join(" ");
+    'inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm',
+    'focus:outline-none focus:ring-2 focus:ring-offset-0',
+    disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
+  ].join(' ');
 }
 
 function clampSlug(s: string, max = 22) {
   if (!s) return s;
   if (s.length <= max) return s;
-  return s.slice(0, Math.max(8, max - 1)) + "…";
+  return s.slice(0, Math.max(8, max - 1)) + '…';
 }
 
 function MobileIconBtn({
@@ -105,11 +105,11 @@ function HoverTip({ label, show }: { label: string; show: boolean }) {
     <AnimatePresence>
       {show ? (
         <motion.span
-          initial={{ opacity: 0, y: 8, scale: 0.96, filter: "blur(6px)" }}
-          animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
-          exit={{ opacity: 0, y: 8, scale: 0.96, filter: "blur(6px)" }}
-          transition={{ duration: 0.16, ease: "easeOut" }}
-          className="pointer-events-none absolute -bottom-9 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-xl border border-zinc-800 bg-zinc-950/90 px-2.5 py-1 text-[11px] font-semibold text-zinc-200 shadow-lg"
+          initial={{ opacity: 0, y: 8, scale: 0.96, filter: 'blur(6px)' }}
+          animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+          exit={{ opacity: 0, y: 8, scale: 0.96, filter: 'blur(6px)' }}
+          transition={{ duration: 0.16, ease: 'easeOut' }}
+          className="pointer-events-none z-[999] absolute -bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-xl border border-zinc-800 bg-zinc-900/90 px-3.5 py-2 text-[11px] font-semibold text-zinc-200 shadow-lg"
         >
           {label}
         </motion.span>
@@ -143,7 +143,7 @@ function IconBtnWithTip({
   title,
   onClick,
   children,
-  className = "",
+  className = '',
 }: {
   title: string;
   onClick: () => void;
@@ -155,9 +155,9 @@ function IconBtnWithTip({
       <motion.button
         onClick={onClick}
         className={[
-          "bg-zinc-800/50 font-light hover:bg-zinc-800/70 transition-all rounded-lg p-2 cursor-pointer",
+          'bg-zinc-800/50 font-light hover:bg-zinc-800/70 transition-all rounded-lg p-2 cursor-pointer',
           className,
-        ].join(" ")}
+        ].join(' ')}
         aria-label={title}
         type="button"
       >
@@ -172,7 +172,7 @@ function IconLinkWithTip({
   title,
   href,
   children,
-  className = "",
+  className = '',
 }: {
   title: string;
   href: string;
@@ -188,9 +188,9 @@ function IconLinkWithTip({
         title={title}
         aria-label={title}
         className={[
-          "inline-flex bg-zinc-800/50 hover:bg-zinc-800/70 transition-all rounded-lg p-2 cursor-pointer text-zinc-200",
+          'inline-flex bg-zinc-800/50 hover:bg-zinc-800/70 transition-all rounded-lg p-2 cursor-pointer text-zinc-200',
           className,
-        ].join(" ")}
+        ].join(' ')}
       >
         {children}
       </a>
@@ -205,7 +205,7 @@ export default function TopBar({
   onPublish,
   saveState,
   publishState,
-  device = "desktop",
+  device = 'desktop',
   onDeviceChange,
 }: TopBarProps) {
   const [slug, setSlug] = useState(projectSlug);
@@ -222,46 +222,45 @@ export default function TopBar({
       const ce = e as CustomEvent<{ slug: string }>;
       if (ce.detail?.slug) setSlug(ce.detail.slug);
     }
-    window.addEventListener("origio:slug-updated", handler);
-    return () => window.removeEventListener("origio:slug-updated", handler);
+    window.addEventListener('origio:slug-updated', handler);
+    return () => window.removeEventListener('origio:slug-updated', handler);
   }, []);
 
   useEffect(() => {
-    if (publishState === "success") setShowPublishSuccess(true);
+    if (publishState === 'success') setShowPublishSuccess(true);
   }, [publishState]);
 
   const isChecking = !publishStatusLoaded;
-  const busy = publishState === "busy" || saveState === "busy";
-  const isPublished = publishMode === "published";
+  const busy = publishState === 'busy' || saveState === 'busy';
+  const isPublished = publishMode === 'published';
   const publishDisabled = isChecking || busy || isPublished;
 
   const PublishIcon = () => {
     if (isChecking) return <Spinner />;
-    if (publishState === "busy") return <Spinner />;
-    if (publishState === "success")
+    if (publishState === 'busy') return <Spinner />;
+    if (publishState === 'success')
       return <BsCheck2 className="h-[16px] w-[16px]" />;
-    if (publishState === "error")
+    if (publishState === 'error')
       return <BsExclamationTriangleFill className="h-[16px] w-[16px]" />;
     return <BsFillSendFill className="h-[16px] w-[16px]" />;
   };
 
   const publishLabelIdle =
-    publishMode === "publish"
-      ? "Publikovat"
-      : publishMode === "publish_changes"
-      ? "Publikovat změny"
-      : "Publikováno";
+    publishMode === 'publish'
+      ? 'Publikovat'
+      : publishMode === 'publish_changes'
+      ? 'Publikovat změny'
+      : 'Publikováno';
 
-  const publishLabel =
-    isChecking
-      ? "Kontroluji…"
-      : publishState === "busy"
-      ? "Publikuji…"
-      : publishState === "success"
-      ? "Publikováno"
-      : publishState === "error"
-      ? "Chyba"
-      : publishLabelIdle;
+  const publishLabel = isChecking
+    ? 'Kontroluji…'
+    : publishState === 'busy'
+    ? 'Publikuji…'
+    : publishState === 'success'
+    ? 'Publikováno'
+    : publishState === 'error'
+    ? 'Chyba'
+    : publishLabelIdle;
 
   const liveUrl = useMemo(() => `https://${slug}.origio.site`, [slug]);
 
@@ -283,9 +282,11 @@ export default function TopBar({
           aria-pressed={active}
           title={title}
           className={[
-            "inline-flex cursor-pointer items-center rounded-lg px-2 py-[7px] text-sm transition-colors",
-            active ? "bg-zinc-900 text-white" : "text-zinc-300 hover:bg-zinc-900",
-          ].join(" ")}
+            'inline-flex cursor-pointer items-center rounded-lg px-2 py-[7px] text-sm transition-colors',
+            active
+              ? 'bg-zinc-900 text-white'
+              : 'text-zinc-300 hover:bg-zinc-900',
+          ].join(' ')}
         >
           <Icon className="h-[16px] w-[16px]" />
         </button>
@@ -304,7 +305,7 @@ export default function TopBar({
               <div className="flex items-center justify-between sm:justify-start gap-3">
                 <button
                   type="button"
-                  onClick={() => openLeft("hub")}
+                  onClick={() => openLeft('hub')}
                   className="inline-flex items-center gap-2 rounded-2xl pr-2.5 cursor-pointer"
                   title="Origio"
                 >
@@ -322,18 +323,24 @@ export default function TopBar({
                 </button>
 
                 <div className="flex items-center gap-2">
-                  <IconBtnWithTip title="Přehled" onClick={() => openLeft("hub")}>
+                  <IconBtnWithTip
+                    title="Přehled"
+                    onClick={() => openLeft('hub')}
+                  >
                     <BsFillGridFill className="w-[18px] h-[18px] text-zinc-200" />
                   </IconBtnWithTip>
 
-                  <IconBtnWithTip title="Účet" onClick={() => openLeft("account")}>
+                  <IconBtnWithTip
+                    title="Účet"
+                    onClick={() => openLeft('account')}
+                  >
                     <BsPersonFill className="w-[18px] h-[18px] text-zinc-200" />
                   </IconBtnWithTip>
 
                   <div className="hidden sm:block">
                     <IconBtnWithTip
                       title="Analytika"
-                      onClick={() => openLeft("analytics")}
+                      onClick={() => openLeft('analytics')}
                     >
                       <BsBarChartFill className="w-[18px] h-[18px] text-zinc-100" />
                     </IconBtnWithTip>
@@ -342,7 +349,7 @@ export default function TopBar({
                   <div className="hidden sm:block">
                     <IconBtnWithTip
                       title="Nastavení projektu"
-                      onClick={() => openLeft("settings")}
+                      onClick={() => openLeft('settings')}
                     >
                       <BsGearWideConnected className="w-[18px] h-[18px] text-zinc-100" />
                     </IconBtnWithTip>
@@ -352,14 +359,25 @@ export default function TopBar({
 
               {/* prostředek */}
               <div className="flex items-center justify-between sm:justify-center gap-2">
+                
+                 {/* ✅ edit + link mimo pill (jako ostatní ikonky) */}
+                 <div className="hidden sm:flex items-center gap-2">
+                  <IconBtnWithTip
+                    title="Upravit adresu"
+                    onClick={() => openLeft('slug')}
+                  >
+                    <BsFillPenFill className="h-[16px] w-[16px] text-zinc-200" />
+                  </IconBtnWithTip>
+                </div>
                 {/* URL pill */}
                 <div className="flex w-full sm:w-auto items-center gap-2">
                   <div className="flex w-full sm:w-auto items-center gap-2 rounded-xl bg-zinc-800/20 px-9 py-[7px]">
                     <IoLockClosed className="w-5 h-5 text-zinc-700" />
 
-                    <button
-                      type="button"
-                      onClick={() => openLeft("slug")}
+                    <a
+                      href={`https://${slug}.origio.site`}
+                      target="_blank"
+                      rel="noreferrer"
                       className="flex-1 text-left cursor-pointer"
                       title="Změnit adresu"
                     >
@@ -371,20 +389,11 @@ export default function TopBar({
                           {slug}.origio.site
                         </span>
                       </div>
-                    </button>
+                    </a>
                   </div>
                 </div>
 
-                {/* ✅ edit + link mimo pill (jako ostatní ikonky) */}
-                <div className="hidden sm:flex items-center gap-2">
-                  <IconBtnWithTip title="Upravit adresu" onClick={() => openLeft("slug")}>
-                    <BsPencilFill className="h-[16px] w-[16px] text-zinc-200" />
-                  </IconBtnWithTip>
-
-                  <IconLinkWithTip title="Otevřít doménu" href={liveUrl}>
-                    <BsBoxArrowUpRight className="h-[16px] w-[16px] text-zinc-200" />
-                  </IconLinkWithTip>
-                </div>
+               
 
                 {/* device toggle */}
                 <div className="hidden sm:inline-flex border-zinc-900 border-2 rounded-lg bg-zinc-950">
@@ -395,11 +404,17 @@ export default function TopBar({
 
               {/* pravá část */}
               <div className="flex items-center justify-end gap-2 font-medium">
-                <IconBtnWithTip title="Feedback" onClick={() => openLeft("feedback")}>
+                <IconBtnWithTip
+                  title="Feedback"
+                  onClick={() => openLeft('feedback')}
+                >
                   <BsChatDotsFill className="w-[18px] h-[18px] text-zinc-200" />
                 </IconBtnWithTip>
 
-                <IconBtnWithTip title="Nahlásit chybu" onClick={() => openLeft("bug-report")}>
+                <IconBtnWithTip
+                  title="Nahlásit chybu"
+                  onClick={() => openLeft('bug-report')}
+                >
                   <BsBugFill className="w-[18px] h-[18px] text-zinc-200" />
                 </IconBtnWithTip>
 
@@ -411,15 +426,15 @@ export default function TopBar({
                   disabled={publishDisabled}
                   className={`${btnBase(publishDisabled)} ${
                     publishDisabled
-                      ? "bg-zinc-800 text-zinc-400 cursor-not-allowed"
-                      : "bg-zinc-100 text-zinc-900 hover:bg-zinc-200 focus:ring-zinc-400/60"
+                      ? 'bg-zinc-800 text-zinc-400 cursor-not-allowed'
+                      : 'bg-zinc-100 text-zinc-900 hover:bg-zinc-200 focus:ring-zinc-400/60'
                   }`}
                   aria-live="polite"
                   type="button"
                 >
                   <span className="hidden sm:inline">{publishLabel}</span>
                   <span className="sm:hidden text-sm">
-                    {publishState === "busy" ? "…" : "Publikovat"}
+                    {publishState === 'busy' ? '…' : 'Publikovat'}
                   </span>
                 </button>
               </div>
@@ -434,7 +449,7 @@ export default function TopBar({
           <div className="h-16 px-3 flex items-center gap-3">
             <button
               type="button"
-              onClick={() => openLeft("hub")}
+              onClick={() => openLeft('hub')}
               className="h-9 w-9 inline-flex items-center justify-center rounded-2xl p-1.5 hover:bg-zinc-900/40 transition"
               title="Origio"
               aria-label="Origio"
@@ -448,7 +463,7 @@ export default function TopBar({
 
             <button
               type="button"
-              onClick={() => openLeft("slug")}
+              onClick={() => openLeft('slug')}
               className="min-w-0 w-full flex gap-2 items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-900/30 px-3 py-2 text-left"
               title="Změnit adresu"
             >
@@ -476,42 +491,51 @@ export default function TopBar({
               }}
               disabled={publishDisabled}
               className={[
-                "inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold",
+                'inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold',
                 publishDisabled
-                  ? "bg-zinc-800 text-zinc-400"
-                  : "bg-zinc-100 text-zinc-900",
-              ].join(" ")}
+                  ? 'bg-zinc-800 text-zinc-400'
+                  : 'bg-zinc-100 text-zinc-900',
+              ].join(' ')}
               type="button"
             >
               <PublishIcon />
-              <span>{publishState === "busy" ? "…" : "Publikovat"}</span>
+              <span>{publishState === 'busy' ? '…' : 'Publikovat'}</span>
             </button>
           </div>
         </div>
 
         <div className="fixed bottom-0 left-0 right-0 z-[60] border-t border-zinc-900/70 bg-zinc-950/85 backdrop-blur">
           <div className="h-16 px-2 flex items-center justify-between">
-            <MobileIconBtn title="Přehled" onClick={() => openLeft("hub")}>
+            <MobileIconBtn title="Přehled" onClick={() => openLeft('hub')}>
               <BsFillGridFill className="h-[18px] w-[18px]" />
             </MobileIconBtn>
 
-            <MobileIconBtn title="Účet" onClick={() => openLeft("account")}>
+            <MobileIconBtn title="Účet" onClick={() => openLeft('account')}>
               <BsPersonFill className="h-[18px] w-[18px]" />
             </MobileIconBtn>
 
-            <MobileIconBtn title="Analytika" onClick={() => openLeft("analytics")}>
+            <MobileIconBtn
+              title="Analytika"
+              onClick={() => openLeft('analytics')}
+            >
               <BsBarChartFill className="h-[18px] w-[18px]" />
             </MobileIconBtn>
 
-            <MobileIconBtn title="Nastavení" onClick={() => openLeft("settings")}>
+            <MobileIconBtn
+              title="Nastavení"
+              onClick={() => openLeft('settings')}
+            >
               <BsGearWideConnected className="h-[18px] w-[18px]" />
             </MobileIconBtn>
 
-            <MobileIconBtn title="Feedback" onClick={() => openLeft("feedback")}>
+            <MobileIconBtn
+              title="Feedback"
+              onClick={() => openLeft('feedback')}
+            >
               <BsChatDotsFill className="h-[18px] w-[18px]" />
             </MobileIconBtn>
 
-            <MobileIconBtn title="Chyba" onClick={() => openLeft("bug-report")}>
+            <MobileIconBtn title="Chyba" onClick={() => openLeft('bug-report')}>
               <BsBugFill className="h-[18px] w-[18px]" />
             </MobileIconBtn>
           </div>

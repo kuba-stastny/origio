@@ -145,7 +145,6 @@ export default function SettingsPanel() {
                 className="h-10 w-full rounded-xl border border-zinc-800 bg-zinc-900 px-3 text-sm text-zinc-100 placeholder-zinc-500 outline-none focus:ring-1 focus:ring-zinc-600"
               />
               <div className="flex justify-between text-[11px] text-zinc-500">
-                <span>Doporučená délka 60–65 znaků.</span>
                 <span>
                   {title.length}/{TITLE_MAX}
                 </span>
@@ -165,7 +164,6 @@ export default function SettingsPanel() {
                 className="h-10 w-full rounded-xl border border-zinc-800 bg-zinc-900 px-3 text-sm text-zinc-100 placeholder-zinc-500 outline-none focus:ring-1 focus:ring-zinc-600"
               />
               <div className="flex justify-between text-[11px] text-zinc-500">
-                <span>Krátké, jasné, bez vaty.</span>
                 <span>
                   {description.length}/{DESC_MAX}
                 </span>

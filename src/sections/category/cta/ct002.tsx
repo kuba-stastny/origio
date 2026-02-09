@@ -10,9 +10,14 @@ import type { BlockInstance } from "@/types/builder";
 
 import { SectionShell } from "@/sections/ui/SectionShell";
 import type { DesignSystem } from "@/types/design-system";
-import { resolveSectionTheme, mapThemeJson } from "@/lib/design-system";
+import { mapThemeJson } from "@/lib/design-system";
 import { Heading, Text } from "@/sections/ui/Typography";
 import PreviewImage from "../../previews/ct002.png";
+import {
+  CinematicBlurUp,
+  CinematicFade,
+  CinematicSplitWords,
+} from "../../motion/cinematic";
 
 /**
  * cta-banner-v2 (DS invert via surface/onSurface)
@@ -48,7 +53,7 @@ export const CTA_BANNER_V2_DEFAULT_DATA = {
     name: { placeholder: "Name" } as FormField,
     email: { placeholder: "Email" } as FormField,
     message: { placeholder: "Message" } as FormField,
-    buttonLabel: "Send message",
+    buttonLabel: "Odeslat zprávu",
   },
   contacts: [
     {
@@ -56,7 +61,11 @@ export const CTA_BANNER_V2_DEFAULT_DATA = {
       label: "hello@dustin.com",
       href: "mailto:hello@dustin.com",
     },
-    { icon: "md:MdOutlinePhone", label: "+114 945 78297", href: "tel:+11494578297" },
+    {
+      icon: "md:MdOutlinePhone",
+      label: "+114 945 78297",
+      href: "tel:+11494578297",
+    },
     { icon: "md:MdOutlineLanguage", label: "Instagram", href: "#" },
     { icon: "md:MdOutlineSportsBasketball", label: "Dribbble", href: "#" },
     { icon: "md:MdOutlineBrush", label: "Behance", href: "#" },
@@ -258,38 +267,24 @@ function ReactIcon({
    Renderer
 ========================= */
 
-function inputStyle(): React.CSSProperties {
-  return {
-    background:
-      "color-mix(in oklab, var(--ds-on-surface) 6%, var(--ds-surface) 94%)",
-    color: "color-mix(in oklab, var(--ds-on-surface) 78%, transparent)",
-    outline:
-      "1px solid color-mix(in oklab, var(--ds-on-surface) 10%, transparent)",
-    outlineOffset: "-1px",
-  };
-}
-
 type CtaBannerV2RendererProps = {
   block: BlockInstance;
+  theme?: DesignSystem;
 };
 
 type SendState = "idle" | "sending" | "sent" | "error";
 
-function pickProjectIdFromParams(p: any): string | undefined {
-  if (!p) return undefined;
-  const values = Object.values(p).filter(Boolean).map(String);
-  const uuid = values.find((v) =>
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v)
-  );
-  return uuid ?? (p.projectId ? String(p.projectId) : undefined);
-}
-
-function CtaBannerV2Renderer({ block }: CtaBannerV2RendererProps) {
+function CtaBannerV2Renderer({ block, theme }: CtaBannerV2RendererProps) {
   const d: any = block.data || {};
 
   const heading: string = d.heading ?? CTA_BANNER_V2_DEFAULT_DATA.heading;
   const subheading: string =
     d.subheading ?? CTA_BANNER_V2_DEFAULT_DATA.subheading;
+
+  const contacts: ContactItem[] =
+    Array.isArray(d.contacts) && d.contacts.length
+      ? d.contacts
+      : (CTA_BANNER_V2_DEFAULT_DATA.contacts as any);
 
   const form = {
     name: d.form?.name ?? CTA_BANNER_V2_DEFAULT_DATA.form.name,
@@ -299,22 +294,17 @@ function CtaBannerV2Renderer({ block }: CtaBannerV2RendererProps) {
       d.form?.buttonLabel ?? CTA_BANNER_V2_DEFAULT_DATA.form.buttonLabel,
   };
 
-  const contacts: ContactItem[] =
-    Array.isArray(d.contacts) && d.contacts.length
-      ? d.contacts
-      : (CTA_BANNER_V2_DEFAULT_DATA.contacts as any);
+  // ✅ 1:1 jako ct001
+  const resolvedTheme = theme ?? mapThemeJson(null);
 
-  const theme: DesignSystem = useMemo(() => {
-    const mapped = mapThemeJson(d?.theme);
-    return resolveSectionTheme(mapped);
-  }, [d?.theme]);
-
+  // ✅ 1:1 jako ct001 (ne picker)
   const params = useParams() as any;
-  const projectId = pickProjectIdFromParams(params);
+  const projectId: string | undefined = params?.projectId;
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+
   const [sendState, setSendState] = useState<SendState>("idle");
 
   const isBusy = sendState === "sending";
@@ -328,9 +318,9 @@ function CtaBannerV2Renderer({ block }: CtaBannerV2RendererProps) {
     return form.buttonLabel || "Send message";
   }, [sendState, form.buttonLabel]);
 
+  // ✅ 1:1 odesílání jako ct001
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-
     if (!canSend) {
       setSendState("error");
       return;
@@ -345,6 +335,7 @@ function CtaBannerV2Renderer({ block }: CtaBannerV2RendererProps) {
         message: message.trim(),
       };
 
+      // Builder mode: pass projectId so API can resolve owner email
       if (projectId) payload.projectId = projectId;
 
       const res = await fetch("/api/contact", {
@@ -358,7 +349,6 @@ function CtaBannerV2Renderer({ block }: CtaBannerV2RendererProps) {
       if (!res.ok) {
         console.error("Contact send failed:", res.status, json);
         setSendState("error");
-        window.setTimeout(() => setSendState("idle"), 2400);
         return;
       }
 
@@ -367,6 +357,7 @@ function CtaBannerV2Renderer({ block }: CtaBannerV2RendererProps) {
       setEmail("");
       setMessage("");
 
+      // revert state back after a bit
       window.setTimeout(() => setSendState("idle"), 2400);
     } catch (err) {
       console.error("Contact send error:", err);
@@ -375,23 +366,39 @@ function CtaBannerV2Renderer({ block }: CtaBannerV2RendererProps) {
     }
   }
 
+  // ✅ 1:1 input style jako ct001
+  const inputInlineStyle: React.CSSProperties = {
+    background:
+      "color-mix(in oklab, var(--ds-bg) 5%, var(--ds-surface) 8%)",
+    color:
+      "color-mix(in oklab, var(--ds-on-surface) 72%, transparent)",
+    outline:
+      "1px solid color-mix(in oklab, var(--ds-on-surface) 10%, transparent)",
+    outlineOffset: "-1px",
+  };
+
   return (
-    <SectionShell theme={theme}>
+    <SectionShell theme={resolvedTheme}>
       <div className="mx-auto w-full">
-        <div
+        <CinematicBlurUp
+          amount={0.22}
+          margin="-120px"
+          y={10}
+          blur={18}
+          duration={1.05}
+          delay={0.06}
           className={[
             "w-full overflow-hidden",
             "rounded-[calc(var(--ds-radius,16px))]",
             "px-6 py-10 md:px-10 md:py-14 lg:px-10 lg:py-20",
             "flex items-center justify-center",
+
+            // ✅ DS in Tailwind (no inline style)
+            "bg-[var(--ds-surface)]",
+            "text-[var(--ds-on-surface)]",
+            "outline outline-1 outline-[color-mix(in_oklab,var(--ds-on-surface)_14%,transparent)]",
+            "-outline-offset-1",
           ].join(" ")}
-          style={{
-            background: "var(--ds-surface)",
-            color: "var(--ds-on-surface)",
-            outline:
-              "1px solid color-mix(in oklab, var(--ds-on-surface) 14%, transparent)",
-            outlineOffset: "-1px",
-          }}
         >
           <div className="flex w-full max-w-[1280px] flex-col items-center gap-10 md:gap-14">
             {/* top text */}
@@ -437,7 +444,7 @@ function CtaBannerV2Renderer({ block }: CtaBannerV2RendererProps) {
                       "text-[18px] leading-[27px] font-light",
                       "outline-none",
                     ].join(" ")}
-                    style={inputStyle()}
+                    style={inputInlineStyle}
                     value={name}
                     onChange={(e) => {
                       setName(e.target.value);
@@ -456,7 +463,7 @@ function CtaBannerV2Renderer({ block }: CtaBannerV2RendererProps) {
                       "text-[18px] leading-[27px] font-light",
                       "outline-none",
                     ].join(" ")}
-                    style={inputStyle()}
+                    style={inputInlineStyle}
                     value={email}
                     onChange={(e) => {
                       setEmail(e.target.value);
@@ -477,7 +484,7 @@ function CtaBannerV2Renderer({ block }: CtaBannerV2RendererProps) {
                       "text-[18px] leading-[27px] font-light",
                       "outline-none",
                     ].join(" ")}
-                    style={inputStyle()}
+                    style={inputInlineStyle}
                     value={message}
                     onChange={(e) => {
                       setMessage(e.target.value);
@@ -512,7 +519,9 @@ function CtaBannerV2Renderer({ block }: CtaBannerV2RendererProps) {
                 <div className="flex flex-col gap-6 md:min-h-[272px] md:justify-between">
                   {contacts.map((c, i) => {
                     const href =
-                      typeof c.href === "string" && c.href.length ? c.href : null;
+                      typeof c.href === "string" && c.href.length
+                        ? c.href
+                        : null;
 
                     const Row = (
                       <div className="flex items-center gap-4">
@@ -563,7 +572,7 @@ function CtaBannerV2Renderer({ block }: CtaBannerV2RendererProps) {
               </div>
             </div>
           </div>
-        </div>
+        </CinematicBlurUp>
       </div>
     </SectionShell>
   );

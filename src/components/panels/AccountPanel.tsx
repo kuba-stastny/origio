@@ -353,7 +353,7 @@ export default function AccountPanel() {
                 </section>
 
                 {/* Smazání účtu */}
-                <section className="rounded-3xl bg-zinc-900/30 p-6">
+                <section className="rounded-3xl bg-zinc-900/30 p-6 hidden">
                   <h2 className="mb-3 text-sm font-medium text-zinc-100">Smazání účtu</h2>
                   <p className="text-sm text-red-400/90">
                     Tato akce je nevratná. Pro potvrzení napiš do pole níže: <b>SMAZAT</b>
@@ -375,10 +375,7 @@ export default function AccountPanel() {
                     </button>
                   </div>
                 </section>
-              </div>
-            )}
-
-            {/* logout tlačítko */}
+                 {/* logout tlačítko */}
             <div className="pt-3 border-t border-zinc-900/40">
               <button
                 onClick={handleLogout}
@@ -387,6 +384,10 @@ export default function AccountPanel() {
                 <span>Odhlásit se</span>
               </button>
             </div>
+              </div>
+            )}
+
+           
           </>
         )}
       </div>

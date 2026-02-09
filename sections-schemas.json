@@ -1,0 +1,1136 @@
+{
+  "generatedAt": "2026-02-02T22:00:51.398Z",
+  "sectionsDir": "/Applications/XAMPP/xamppfiles/htdocs/origiosite/origiosite/src/sections",
+  "exportsOnly": false,
+  "totalFilesScanned": 25,
+  "items": [
+    {
+      "name": "ABOUT_ME_SCHEMA",
+      "folder": "category",
+      "file": "src/sections/category/about/ab001.tsx",
+      "ok": true,
+      "schema": [
+        {
+          "type": "group",
+          "label": "Text",
+          "children": [
+            {
+              "type": "text",
+              "path": "title",
+              "label": "Title",
+              "placeholder": "About me",
+              "maxLength": 80
+            },
+            {
+              "type": "text",
+              "path": "body",
+              "label": "Body",
+              "multiline": true,
+              "rows": 4,
+              "maxLength": 800
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": "Image",
+          "children": [
+            {
+              "type": "image",
+              "path": "image",
+              "label": "Portrait image"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "STORY_TEXT_SCHEMA",
+      "folder": "category",
+      "file": "src/sections/category/about/ab002.tsx",
+      "ok": true,
+      "schema": [
+        {
+          "type": "text",
+          "path": "text",
+          "label": "Text",
+          "multiline": true,
+          "rows": 4,
+          "maxLength": 600,
+          "placeholder": "I love coming up with solutions that look amazing and work great too…"
+        }
+      ]
+    },
+    {
+      "name": "CTA_BANNER_SCHEMA",
+      "folder": "category",
+      "file": "src/sections/category/cta/ct001.tsx",
+      "ok": true,
+      "schema": [
+        {
+          "type": "group",
+          "label": "Nastavení sekce",
+          "children": [
+            {
+              "type": "theme",
+              "path": "theme",
+              "label": "Design systém sekce",
+              "help": "Tahle sekce je 'invert' – karta používá ds-surface/ds-on-surface. Pro bílý banner na tmavé stránce nastav surface světlé a bg tmavé."
+            },
+            {
+              "type": "text",
+              "path": "heading",
+              "label": "Nadpis",
+              "rows": 2,
+              "multiline": true,
+              "maxLength": 120
+            },
+            {
+              "type": "text",
+              "path": "subheading",
+              "label": "Podnadpis",
+              "rows": 4,
+              "multiline": true,
+              "maxLength": 320
+            }
+          ]
+        },
+        {
+          "type": "repeater",
+          "label": "Ikony / odkazy",
+          "path": "socials",
+          "emptyHint": "Přidej první ikonu",
+          "children": [
+            {
+              "type": "icon",
+              "path": "icon",
+              "label": "Ikona",
+              "placeholder": "Select icon…",
+              "help": "Ukládá se jako \"pack:Name\" (např. md:MdHome)."
+            },
+            {
+              "type": "text",
+              "path": "label",
+              "label": "Popisek (a11y)",
+              "placeholder": "Website / Email / Instagram…",
+              "maxLength": 40
+            },
+            {
+              "type": "link",
+              "path": "href",
+              "label": "URL",
+              "placeholder": "https://…"
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": "Formulář",
+          "children": [
+            {
+              "type": "group",
+              "label": "Name",
+              "children": [
+                {
+                  "type": "text",
+                  "path": "form.name.label",
+                  "label": "Label",
+                  "maxLength": 24
+                },
+                {
+                  "type": "text",
+                  "path": "form.name.placeholder",
+                  "label": "Placeholder",
+                  "maxLength": 60
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "label": "Email",
+              "children": [
+                {
+                  "type": "text",
+                  "path": "form.email.label",
+                  "label": "Label",
+                  "maxLength": 24
+                },
+                {
+                  "type": "text",
+                  "path": "form.email.placeholder",
+                  "label": "Placeholder",
+                  "maxLength": 60
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "label": "Message",
+              "children": [
+                {
+                  "type": "text",
+                  "path": "form.message.label",
+                  "label": "Label",
+                  "maxLength": 24
+                },
+                {
+                  "type": "text",
+                  "path": "form.message.placeholder",
+                  "label": "Placeholder",
+                  "maxLength": 80
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "path": "form.buttonLabel",
+              "label": "Text tlačítka",
+              "placeholder": "Send message",
+              "maxLength": 32
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "CTA_BANNER_V2_SCHEMA",
+      "folder": "category",
+      "file": "src/sections/category/cta/ct002.tsx",
+      "ok": true,
+      "schema": [
+        {
+          "type": "group",
+          "label": "Nastavení sekce",
+          "children": [
+            {
+              "type": "theme",
+              "path": "theme",
+              "label": "Design systém sekce",
+              "help": "Invert varianta – karta používá ds-surface/ds-on-surface. Pro bílý blok na tmavé stránce nastav surface světlé a bg tmavé."
+            },
+            {
+              "type": "text",
+              "path": "heading",
+              "label": "Nadpis",
+              "rows": 2,
+              "multiline": true,
+              "maxLength": 140
+            },
+            {
+              "type": "text",
+              "path": "subheading",
+              "label": "Podnadpis",
+              "rows": 3,
+              "multiline": true,
+              "maxLength": 240
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": "Formulář (placeholders)",
+          "children": [
+            {
+              "type": "text",
+              "path": "form.name.placeholder",
+              "label": "Placeholder – Name",
+              "maxLength": 60
+            },
+            {
+              "type": "text",
+              "path": "form.email.placeholder",
+              "label": "Placeholder – Email",
+              "maxLength": 60
+            },
+            {
+              "type": "text",
+              "path": "form.message.placeholder",
+              "label": "Placeholder – Message",
+              "maxLength": 80
+            },
+            {
+              "type": "text",
+              "path": "form.buttonLabel",
+              "label": "Text tlačítka",
+              "maxLength": 32
+            }
+          ]
+        },
+        {
+          "type": "repeater",
+          "label": "Kontakty / odkazy",
+          "path": "contacts",
+          "emptyHint": "Přidej první kontakt",
+          "children": [
+            {
+              "type": "icon",
+              "path": "icon",
+              "label": "Ikona",
+              "placeholder": "Select icon…",
+              "help": "Ukládá se jako \"pack:Name\" (např. md:MdOutlineMailOutline)."
+            },
+            {
+              "type": "text",
+              "path": "label",
+              "label": "Text",
+              "maxLength": 80
+            },
+            {
+              "type": "link",
+              "path": "href",
+              "label": "Odkaz (volitelné)",
+              "placeholder": "mailto: / tel: / https:// / #"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "GALLERY_GRID_SCHEMA",
+      "folder": "category",
+      "file": "src/sections/category/gallery/ga001.tsx",
+      "ok": true,
+      "schema": [
+        {
+          "type": "repeater",
+          "label": "Galerie",
+          "path": "items",
+          "emptyHint": "Přidej první obrázek",
+          "children": [
+            {
+              "type": "image",
+              "path": "image",
+              "label": "Obrázek"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "HEADER_SCHEMA",
+      "folder": "category",
+      "file": "src/sections/category/header/hd001.tsx",
+      "ok": true,
+      "schema": [
+        {
+          "type": "group",
+          "label": "Avatar",
+          "children": [
+            {
+              "type": "image",
+              "path": "logo",
+              "label": "Avatar image"
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": "Profile",
+          "children": [
+            {
+              "type": "text",
+              "path": "profile.name",
+              "label": "Name",
+              "maxLength": 60
+            },
+            {
+              "type": "text",
+              "path": "profile.status",
+              "label": "Status",
+              "multiline": true,
+              "rows": 2,
+              "maxLength": 120
+            }
+          ]
+        },
+        {
+          "type": "repeater",
+          "label": "Navigation",
+          "path": "nav",
+          "emptyHint": "Add first nav item",
+          "children": [
+            {
+              "type": "text",
+              "path": "label",
+              "label": "Label",
+              "maxLength": 32
+            },
+            {
+              "type": "link",
+              "path": "href",
+              "label": "Link"
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": "CTA button",
+          "children": [
+            {
+              "type": "text",
+              "path": "cta.label",
+              "label": "Label",
+              "maxLength": 32
+            },
+            {
+              "type": "link",
+              "path": "cta.href",
+              "label": "Link"
+            }
+          ]
+        },
+        {
+          "type": "repeater",
+          "label": "Socials",
+          "path": "socials",
+          "emptyHint": "Add first link",
+          "children": [
+            {
+              "type": "select",
+              "path": "platform",
+              "label": "Platform",
+              "options": [
+                {
+                  "value": "instagram",
+                  "label": "Instagram"
+                },
+                {
+                  "value": "facebook",
+                  "label": "Facebook"
+                },
+                {
+                  "value": "twitter",
+                  "label": "X / Twitter"
+                },
+                {
+                  "value": "linkedin",
+                  "label": "LinkedIn"
+                },
+                {
+                  "value": "youtube",
+                  "label": "YouTube"
+                },
+                {
+                  "value": "tiktok",
+                  "label": "TikTok"
+                }
+              ]
+            },
+            {
+              "type": "link",
+              "path": "href",
+              "label": "URL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "HERO_GALLERY_SCHEMA",
+      "folder": "category",
+      "file": "src/sections/category/hero/h001.tsx",
+      "ok": true,
+      "schema": [
+        {
+          "type": "group",
+          "label": "Layout",
+          "children": [
+            {
+              "type": "select",
+              "path": "variant",
+              "label": "Variant",
+              "options": [
+                {
+                  "label": "Left",
+                  "value": "left"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": "Texty",
+          "children": [
+            {
+              "type": "text",
+              "path": "heading",
+              "label": "Heading",
+              "placeholder": "Strong value proposition…",
+              "maxLength": 160
+            },
+            {
+              "type": "text",
+              "path": "subheading",
+              "label": "Subheading",
+              "placeholder": "One–two sentences that explain the benefit…",
+              "multiline": true,
+              "rows": 4,
+              "maxLength": 420
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": "Primary CTA",
+          "children": [
+            {
+              "type": "text",
+              "path": "ctaPrimary.label",
+              "label": "Label",
+              "placeholder": "Let's connect",
+              "maxLength": 60
+            },
+            {
+              "type": "link",
+              "path": "ctaPrimary.href",
+              "label": "Link",
+              "placeholder": "#contact, https://…, tel:+420…, mailto:…"
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": "Secondary CTA",
+          "children": [
+            {
+              "type": "text",
+              "path": "ctaSecondary.label",
+              "label": "Label",
+              "placeholder": "My work",
+              "maxLength": 60
+            },
+            {
+              "type": "link",
+              "path": "ctaSecondary.href",
+              "label": "Link",
+              "placeholder": "#projects, https://…, tel:+420…, mailto:…"
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": "Slider",
+          "children": [
+            {
+              "type": "number",
+              "path": "autoplayMs",
+              "label": "Autoplay (ms)",
+              "min": 1500,
+              "max": 20000,
+              "step": 100
+            }
+          ]
+        },
+        {
+          "type": "repeater",
+          "label": "Gallery (obrázky)",
+          "path": "gallery",
+          "emptyHint": "Přidej alespoň 3 obrázky",
+          "children": [
+            {
+              "type": "image",
+              "path": "image",
+              "label": "Obrázek"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "HERO_SCHEMA",
+      "folder": "category",
+      "file": "src/sections/category/hero/h002.tsx",
+      "ok": true,
+      "schema": [
+        {
+          "type": "group",
+          "label": "Layout",
+          "children": [
+            {
+              "type": "select",
+              "path": "variant",
+              "label": "Variant",
+              "options": [
+                {
+                  "label": "Left",
+                  "value": "left"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": "Texty",
+          "children": [
+            {
+              "type": "text",
+              "path": "heading",
+              "label": "Heading",
+              "placeholder": "Strong value proposition…",
+              "maxLength": 160
+            },
+            {
+              "type": "text",
+              "path": "subheading",
+              "label": "Subheading",
+              "placeholder": "One–two sentences that explain the benefit…",
+              "multiline": true,
+              "rows": 4,
+              "maxLength": 420
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": "Primary CTA",
+          "children": [
+            {
+              "type": "text",
+              "path": "ctaPrimary.label",
+              "label": "Label",
+              "placeholder": "Let's connect",
+              "maxLength": 60
+            },
+            {
+              "type": "link",
+              "path": "ctaPrimary.href",
+              "label": "Link",
+              "placeholder": "#contact, https://…, tel:+420…, mailto:…"
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": "Secondary CTA",
+          "children": [
+            {
+              "type": "text",
+              "path": "ctaSecondary.label",
+              "label": "Label",
+              "placeholder": "My work",
+              "maxLength": 60
+            },
+            {
+              "type": "link",
+              "path": "ctaSecondary.href",
+              "label": "Link",
+              "placeholder": "#projects, https://…, tel:+420…, mailto:…"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "SERVICES_SCHEMA",
+      "folder": "category",
+      "file": "src/sections/category/services/sv001.tsx",
+      "ok": true,
+      "schema": [
+        {
+          "type": "group",
+          "label": "Section",
+          "children": [
+            {
+              "type": "text",
+              "path": "heading",
+              "label": "Heading",
+              "placeholder": "My services",
+              "maxLength": 80
+            }
+          ]
+        },
+        {
+          "type": "repeater",
+          "label": "Services",
+          "path": "items",
+          "emptyHint": "Add first service",
+          "children": [
+            {
+              "type": "media",
+              "path": "image",
+              "label": "Média (obrázek / video)",
+              "allowed": [
+                "image"
+              ]
+            },
+            {
+              "type": "text",
+              "path": "title",
+              "label": "Title",
+              "maxLength": 60
+            },
+            {
+              "type": "text",
+              "path": "description",
+              "label": "Description",
+              "multiline": true,
+              "rows": 4,
+              "placeholder": "Short description…",
+              "maxLength": 260
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "SERVICES_GRID_SCHEMA",
+      "folder": "category",
+      "file": "src/sections/category/services/sv002.tsx",
+      "ok": true,
+      "schema": [
+        {
+          "type": "group",
+          "label": "Nastavení sekce",
+          "children": [
+            {
+              "type": "text",
+              "path": "heading",
+              "label": "Nadpis sekce",
+              "placeholder": "My services",
+              "maxLength": 80
+            },
+            {
+              "type": "group",
+              "label": "CTA tlačítko",
+              "children": [
+                {
+                  "type": "text",
+                  "path": "cta.label",
+                  "label": "Text tlačítka",
+                  "placeholder": "Get in touch",
+                  "maxLength": 40
+                },
+                {
+                  "type": "link",
+                  "path": "cta.href",
+                  "label": "Odkaz tlačítka",
+                  "placeholder": "#contact nebo https://…"
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "label": "Vzhled (theme)",
+              "children": [
+                {
+                  "type": "theme",
+                  "path": "theme",
+                  "label": "Design systém sekce",
+                  "help": "Volitelné. Když nevyplníš, použije se globální theme."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "repeater",
+          "label": "Služby",
+          "path": "items",
+          "emptyHint": "Přidej první službu",
+          "children": [
+            {
+              "type": "icon",
+              "path": "icon",
+              "label": "Ikona",
+              "help": "Ukládá se jako \"pack:Name\" (např. md:MdHome). Může být i emoji.",
+              "placeholder": "Select icon…"
+            },
+            {
+              "type": "image",
+              "path": "image",
+              "label": "Obrázek (použije se jen u wide karet)"
+            },
+            {
+              "type": "text",
+              "path": "title",
+              "label": "Název služby",
+              "maxLength": 60
+            },
+            {
+              "type": "text",
+              "path": "description",
+              "label": "Popis",
+              "multiline": true,
+              "rows": 3,
+              "placeholder": "Stručný popis služby...",
+              "maxLength": 260
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "SHOWROOM_SCHEMA",
+      "folder": "category",
+      "file": "src/sections/category/showroom/sh001.tsx",
+      "ok": true,
+      "schema": [
+        {
+          "type": "repeater",
+          "label": "Karty showroomu",
+          "path": "items",
+          "emptyHint": "Přidej první kartu",
+          "children": [
+            {
+              "type": "media",
+              "path": "media",
+              "label": "Média (obrázek / video)",
+              "allowed": [
+                "image",
+                "video"
+              ]
+            },
+            {
+              "type": "text",
+              "path": "title",
+              "label": "Titulek",
+              "multiline": true,
+              "rows": 2,
+              "maxLength": 140
+            },
+            {
+              "type": "repeater",
+              "path": "tags",
+              "label": "Tagy",
+              "emptyHint": "Přidej první tag",
+              "children": [
+                {
+                  "type": "text",
+                  "path": "",
+                  "label": "Tag",
+                  "maxLength": 28
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "PROJECT_HIGHLIGHT_SCHEMA",
+      "folder": "category",
+      "file": "src/sections/category/showroom/sh002.tsx",
+      "ok": true,
+      "schema": [
+        {
+          "type": "group",
+          "label": "Nastavení sekce",
+          "children": [
+            {
+              "type": "text",
+              "path": "heading",
+              "label": "Nadpis (volitelné)",
+              "placeholder": "Selected projects",
+              "maxLength": 80
+            }
+          ]
+        },
+        {
+          "type": "repeater",
+          "label": "Projekty",
+          "path": "projects",
+          "emptyHint": "Přidej první projekt",
+          "children": [
+            {
+              "type": "group",
+              "label": "Obsah projektu",
+              "children": [
+                {
+                  "type": "image",
+                  "path": "image",
+                  "label": "Obrázek"
+                },
+                {
+                  "type": "text",
+                  "path": "title",
+                  "label": "Titulek",
+                  "placeholder": "Kreativy",
+                  "maxLength": 80
+                },
+                {
+                  "type": "text",
+                  "path": "body",
+                  "label": "Popis",
+                  "multiline": true,
+                  "rows": 4,
+                  "placeholder": "Project description…",
+                  "maxLength": 320
+                }
+              ]
+            },
+            {
+              "type": "repeater",
+              "label": "Řádky",
+              "path": "rows",
+              "emptyHint": "Přidej první řádek",
+              "children": [
+                {
+                  "type": "icon",
+                  "path": "icon",
+                  "label": "Ikona",
+                  "help": "Ukládá se jako \"pack:name\" (např. md:MdHome). Legacy: link/time/metric.",
+                  "placeholder": "Select icon…"
+                },
+                {
+                  "type": "text",
+                  "path": "label",
+                  "label": "Text",
+                  "placeholder": "Row label…",
+                  "maxLength": 80
+                },
+                {
+                  "type": "text",
+                  "path": "href",
+                  "label": "URL (volitelné)",
+                  "placeholder": "https://example.com",
+                  "maxLength": 200
+                },
+                {
+                  "type": "switch",
+                  "path": "showArrow",
+                  "label": "Zobrazit šipku",
+                  "help": "Typicky jen když je řádek odkaz."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "SHOWROOM_V2_SCHEMA",
+      "folder": "category",
+      "file": "src/sections/category/showroom/sh003.tsx",
+      "ok": true,
+      "schema": [
+        {
+          "type": "repeater",
+          "label": "Karty showroomu",
+          "path": "items",
+          "emptyHint": "Přidej první kartu",
+          "children": [
+            {
+              "type": "image",
+              "path": "image",
+              "label": "Obrázek"
+            },
+            {
+              "type": "text",
+              "path": "title",
+              "label": "Titulek",
+              "multiline": true,
+              "rows": 2,
+              "maxLength": 140
+            },
+            {
+              "type": "text",
+              "path": "description",
+              "label": "Popisek",
+              "multiline": true,
+              "rows": 2,
+              "maxLength": 180
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "LOGO_LOOP_SCHEMA",
+      "folder": "category",
+      "file": "src/sections/category/stats/st001.tsx",
+      "ok": true,
+      "schema": [
+        {
+          "type": "repeater",
+          "label": "Loga",
+          "path": "items",
+          "emptyHint": "Přidejte první logo",
+          "children": [
+            {
+              "type": "image",
+              "path": "image",
+              "label": "Logo (obrázek)"
+            },
+            {
+              "type": "text",
+              "path": "title",
+              "label": "Text místo loga (volitelné)",
+              "maxLength": 60
+            },
+            {
+              "type": "text",
+              "path": "href",
+              "label": "Odkaz (volitelné)",
+              "placeholder": "https://…",
+              "maxLength": 200
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "STATS_SCHEMA",
+      "folder": "category",
+      "file": "src/sections/category/stats/st002.tsx",
+      "ok": true,
+      "schema": [
+        {
+          "type": "repeater",
+          "label": "Statistiky",
+          "path": "items",
+          "emptyHint": "Přidej první statistiku",
+          "children": [
+            {
+              "type": "text",
+              "path": "value",
+              "label": "Hodnota",
+              "placeholder": "např. 7+, 23+, 14",
+              "maxLength": 24
+            },
+            {
+              "type": "text",
+              "path": "label",
+              "label": "Popisek",
+              "placeholder": "Krátký popisek statistiky",
+              "maxLength": 100
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "TESTIMONIALS_SCHEMA",
+      "folder": "category",
+      "file": "src/sections/category/testimonials/ts001.tsx",
+      "ok": true,
+      "schema": [
+        {
+          "type": "group",
+          "label": "Nastavení sekce",
+          "children": [
+            {
+              "type": "text",
+              "path": "heading",
+              "label": "Nadpis sekce",
+              "placeholder": "What others have to say",
+              "maxLength": 80
+            }
+          ]
+        },
+        {
+          "type": "repeater",
+          "label": "Reference",
+          "path": "items",
+          "emptyHint": "Přidej první referenci",
+          "children": [
+            {
+              "type": "number",
+              "path": "rating",
+              "label": "Počet hvězd (0–5)"
+            },
+            {
+              "type": "text",
+              "path": "quote",
+              "label": "Text recenze",
+              "multiline": true,
+              "rows": 4,
+              "placeholder": "Krátká citace/feedback…",
+              "maxLength": 320
+            },
+            {
+              "type": "group",
+              "label": "Autor",
+              "children": [
+                {
+                  "type": "text",
+                  "path": "author.name",
+                  "label": "Jméno",
+                  "maxLength": 60
+                },
+                {
+                  "type": "text",
+                  "path": "author.role",
+                  "label": "Role / společnost",
+                  "maxLength": 80
+                },
+                {
+                  "type": "image",
+                  "path": "author.avatar",
+                  "label": "Profilová fotka (volitelné)"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "TESTIMONIALS_SCHEMA",
+      "folder": "category",
+      "file": "src/sections/category/testimonials/ts002.tsx",
+      "ok": true,
+      "schema": [
+        {
+          "type": "group",
+          "label": "Nastavení sekce",
+          "children": [
+            {
+              "type": "text",
+              "path": "heading",
+              "label": "Nadpis sekce",
+              "placeholder": "What others have to say",
+              "maxLength": 80
+            }
+          ]
+        },
+        {
+          "type": "repeater",
+          "label": "Reference",
+          "path": "items",
+          "emptyHint": "Přidej první referenci",
+          "children": [
+            {
+              "type": "number",
+              "path": "rating",
+              "label": "Počet hvězd (0–5)"
+            },
+            {
+              "type": "text",
+              "path": "quote",
+              "label": "Text recenze",
+              "multiline": true,
+              "rows": 4,
+              "placeholder": "Krátká citace/feedback…",
+              "maxLength": 320
+            },
+            {
+              "type": "group",
+              "label": "Autor",
+              "children": [
+                {
+                  "type": "text",
+                  "path": "author.name",
+                  "label": "Jméno",
+                  "maxLength": 60
+                },
+                {
+                  "type": "text",
+                  "path": "author.role",
+                  "label": "Role / společnost",
+                  "maxLength": 80
+                },
+                {
+                  "type": "image",
+                  "path": "author.avatar",
+                  "label": "Profilová fotka (volitelné)"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

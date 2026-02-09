@@ -21,27 +21,18 @@ function makeClient(req: NextRequest, res: NextResponse) {
   );
 }
 
-/** ✅ Origin z nginx headerů (ne z req.url) */
 function getPublicOrigin(req: NextRequest) {
   const proto = req.headers.get("x-forwarded-proto") ?? "https";
-  const host =
-    req.headers.get("x-forwarded-host") ??
-    req.headers.get("host") ??
-    "";
-
+  const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? "";
   if (host) return `${proto}://${host}`;
-
-  // fallback: env → poslední možnost
   return process.env.NEXT_PUBLIC_SITE_URL ?? "https://app.origio.site";
 }
 
-/** ✅ jen random znaky (např. x7dhdjx) */
 function randomSlug(len = 7) {
   const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
   let out = "";
 
   const cryptoObj: Crypto | undefined = (globalThis as any).crypto;
-
   if (cryptoObj?.getRandomValues) {
     const buf = new Uint8Array(len);
     cryptoObj.getRandomValues(buf);
@@ -53,11 +44,22 @@ function randomSlug(len = 7) {
   return out;
 }
 
-export async function GET(req: NextRequest) {
-  const res = NextResponse.next();
-  const supabase = makeClient(req, res);
+/** ✅ přenese cookies z jedné NextResponse do druhé */
+function copyCookies(from: NextResponse, to: NextResponse) {
+  const all = from.cookies.getAll();
+  for (const c of all) {
+    to.cookies.set(c);
+  }
+}
 
-  const publicOrigin = getPublicOrigin(req);
+export async function GET(req: NextRequest) {
+  const origin = getPublicOrigin(req);
+
+  // ✅ base response, do které Supabase zapisuje cookies
+  const resBase = NextResponse.next();
+  resBase.headers.set("cache-control", "no-store");
+
+  const supabase = makeClient(req, resBase);
 
   const {
     data: { user },
@@ -67,7 +69,10 @@ export async function GET(req: NextRequest) {
   if (uErr) console.error("[post-login] getUser error", uErr);
 
   if (!user) {
-    return NextResponse.redirect(new URL("/login", publicOrigin));
+    const redirectRes = NextResponse.redirect(new URL("/login", origin));
+    redirectRes.headers.set("cache-control", "no-store");
+    copyCookies(resBase, redirectRes);
+    return redirectRes;
   }
 
   // 1) membership
@@ -85,10 +90,8 @@ export async function GET(req: NextRequest) {
   // 2) create workspace if missing
   if (!workspaceId) {
     const baseName = user.email?.split("@")[0] ?? "Můj workspace";
-
     let wsSlug = randomSlug(7);
 
-    let created = false;
     for (let i = 0; i < 4; i++) {
       const { data: newWs, error: wsErr } = await supabase
         .from("workspaces")
@@ -102,7 +105,6 @@ export async function GET(req: NextRequest) {
 
       if (!wsErr && newWs?.id) {
         workspaceId = newWs.id as string;
-        created = true;
         break;
       }
 
@@ -110,12 +112,18 @@ export async function GET(req: NextRequest) {
 
       if (i === 3) {
         console.error("[post-login] create workspace failed", wsErr);
-        return NextResponse.redirect(new URL("/login?e=ws", publicOrigin));
+        const redirectRes = NextResponse.redirect(new URL("/login?e=ws", origin));
+        redirectRes.headers.set("cache-control", "no-store");
+        copyCookies(resBase, redirectRes);
+        return redirectRes;
       }
     }
 
-    if (!created || !workspaceId) {
-      return NextResponse.redirect(new URL("/login?e=ws", publicOrigin));
+    if (!workspaceId) {
+      const redirectRes = NextResponse.redirect(new URL("/login?e=ws", origin));
+      redirectRes.headers.set("cache-control", "no-store");
+      copyCookies(resBase, redirectRes);
+      return redirectRes;
     }
 
     const { error: wmErr } = await supabase.from("workspace_members").insert({
@@ -126,7 +134,10 @@ export async function GET(req: NextRequest) {
 
     if (wmErr) {
       console.error("[post-login] create membership failed", wmErr);
-      return NextResponse.redirect(new URL("/login?e=member", publicOrigin));
+      const redirectRes = NextResponse.redirect(new URL("/login?e=member", origin));
+      redirectRes.headers.set("cache-control", "no-store");
+      copyCookies(resBase, redirectRes);
+      return redirectRes;
     }
   }
 
@@ -181,12 +192,24 @@ export async function GET(req: NextRequest) {
 
       if (i === 3) {
         console.error("[post-login] create project failed", newProjErr);
-        return NextResponse.redirect(new URL("/login?e=project", publicOrigin));
+        const redirectRes = NextResponse.redirect(new URL("/login?e=project", origin));
+        redirectRes.headers.set("cache-control", "no-store");
+        copyCookies(resBase, redirectRes);
+        return redirectRes;
       }
     }
   }
 
-  return NextResponse.redirect(
-    new URL(`/workspaces/${workspaceId}/projects/${projectId}/builder`, publicOrigin)
+  const target = new URL(
+    `/workspaces/${workspaceId}/projects/${projectId}/builder`,
+    origin
   );
+
+  const redirectRes = NextResponse.redirect(target);
+  redirectRes.headers.set("cache-control", "no-store");
+
+  // ✅ KRITICKÉ: přenést cookies, které Supabase případně upravila během getUser/DB flow
+  copyCookies(resBase, redirectRes);
+
+  return redirectRes;
 }

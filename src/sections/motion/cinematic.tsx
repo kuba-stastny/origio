@@ -182,7 +182,14 @@ export function CinematicSplitLetters({
   delay,
 }: CinematicSplitLettersProps) {
   const r = useReducedMotion();
-  const chars = useMemo(() => Array.from(text ?? ""), [text]);
+
+  // ✅ split by tokens (words + spaces) so we can wrap whole words as nowrap blocks
+  const tokens = useMemo(() => {
+    const raw = (text ?? "");
+    if (!raw) return [];
+    // keep whitespace tokens
+    return raw.split(/(\s+)/).filter((t) => t.length > 0);
+  }, [text]);
 
   const container: Variants = {
     hidden: {},
@@ -216,27 +223,40 @@ export function CinematicSplitLetters({
       amount={amount}
       delay={delay ?? 0}
     >
-      {chars.map((ch, i) => {
-        if (ch === " ") {
+      {tokens.map((t, i) => {
+        const isSpace = /^\s+$/.test(t);
+
+        // keep spaces as real text nodes so wrapping behaves naturally
+        if (isSpace) {
           return (
             <span key={`sp-${i}`} aria-hidden="true">
-              {" "}
+              {t}
             </span>
           );
         }
+
+        // ✅ Wrap each word so it can NEVER break across lines
         return (
-          <motion.span
-            key={`c-${i}`}
-            variants={letter}
-            className="inline-block will-change-transform"
+          <span
+            key={`wd-${i}`}
+            className="inline-flex whitespace-nowrap align-baseline"
           >
-            {ch}
-          </motion.span>
+            {Array.from(t).map((ch, j) => (
+              <motion.span
+                key={`c-${i}-${j}`}
+                variants={letter}
+                className="inline-block will-change-transform"
+              >
+                {ch}
+              </motion.span>
+            ))}
+          </span>
         );
       })}
     </ViewportOnce>
   );
 }
+
 
 /* =========================================================
    3) Full TEXT fade (BLOCK)

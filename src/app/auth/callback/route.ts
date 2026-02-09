@@ -32,10 +32,6 @@ export async function GET(req: NextRequest) {
   const origin = getPublicOrigin(req);
   const url = new URL(req.url);
 
-  const res = NextResponse.redirect(new URL('/api/v1/auth/post-login', origin));
-  const supabase = makeClient(req, res);
-
-  // ✅ Supabase OAuth vrací ?code=... → exchange → uloží cookies
   const code = url.searchParams.get('code');
   const error = url.searchParams.get('error');
   const error_description = url.searchParams.get('error_description');
@@ -48,9 +44,12 @@ export async function GET(req: NextRequest) {
   }
 
   if (!code) {
-    // nic k exchange → pošli na login
     return NextResponse.redirect(new URL('/login?e=no_code', origin));
   }
+
+  // ✅ po exchange redirect na post-login, cookies se nastaví v response
+  const res = NextResponse.redirect(new URL('/api/v1/auth/post-login', origin));
+  const supabase = makeClient(req, res);
 
   const { error: exErr } = await supabase.auth.exchangeCodeForSession(code);
 
@@ -60,6 +59,9 @@ export async function GET(req: NextRequest) {
     target.searchParams.set('m', exErr.message ?? 'exchangeCodeForSession failed');
     return NextResponse.redirect(target);
   }
+
+  // doporučení: aby to nikdy nechytil caching layer
+  res.headers.set('cache-control', 'no-store');
 
   return res;
 }

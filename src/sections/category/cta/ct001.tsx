@@ -1,19 +1,23 @@
 // src/sections/cta-banner.tsx
-"use client";
+'use client';
 
-import React, { useMemo, useState } from "react";
-import { motion } from "framer-motion";
-import { useParams } from "next/navigation";
+import React, { useMemo, useState } from 'react';
+import { motion } from 'framer-motion';
+import { useParams } from 'next/navigation';
 
-import type { SectionModule } from "../../types";
-import type { BlockInstance } from "@/types/builder";
+import type { SectionModule } from '../../types';
+import type { BlockInstance } from '@/types/builder';
 
-import { SectionShell } from "@/sections/ui/SectionShell";
-import type { DesignSystem } from "@/types/design-system";
-import { mapThemeJson } from "@/lib/design-system";
-import { Heading, Text } from "@/sections/ui/Typography";
-import PreviewImage from "../../previews/ct001.png";
-
+import { SectionShell } from '@/sections/ui/SectionShell';
+import type { DesignSystem } from '@/types/design-system';
+import { mapThemeJson } from '@/lib/design-system';
+import { Heading, Text } from '@/sections/ui/Typography';
+import PreviewImage from '../../previews/ct001.png';
+import {
+  CinematicBlurUp,
+  CinematicFade,
+  CinematicSplitWords,
+} from '../../motion/cinematic';
 /**
  * cta-banner (DS invert via surface/onSurface)
  * - Card uses: surface + onSurface
@@ -38,21 +42,21 @@ type FormField = {
 };
 
 export const CTA_BANNER_DEFAULT_DATA = {
-  heading: "Tell me about your next project!",
+  heading: 'Tell me about your next project!',
   subheading:
-    "I specialize in elevating brands on search engines, driving targeted traffic, and converting prospects into loyal clients through strategic SEO and cutting-edge marketing techniques.",
+    'I specialize in elevating brands on search engines, driving targeted traffic, and converting prospects into loyal clients through strategic SEO and cutting-edge marketing techniques.',
   socials: [
-    { icon: "md:MdOutlineLanguage", href: "#", label: "Website" },
-    { icon: "md:MdOutlineMailOutline", href: "#", label: "Email" },
+    { icon: 'md:MdOutlineLanguage', href: '#', label: 'Website' },
+    { icon: 'md:MdOutlineMailOutline', href: '#', label: 'Email' },
   ] as SocialItem[],
   form: {
-    name: { label: "Name", placeholder: "Kubo Novak" } as FormField,
-    email: { label: "Email", placeholder: "kubo@studio.cz" } as FormField,
+    name: { label: 'Name', placeholder: 'Kubo Novak' } as FormField,
+    email: { label: 'Email', placeholder: 'kubo@studio.cz' } as FormField,
     message: {
-      label: "Message",
-      placeholder: "Write your inquiry...",
+      label: 'Message',
+      placeholder: 'Write your inquiry...',
     } as FormField,
-    buttonLabel: "Send message",
+    buttonLabel: 'Send message',
   },
 } as const;
 
@@ -63,7 +67,7 @@ export const CTA_BANNER_DEFAULT_DATA = {
 function parseIconValue(v?: string | null) {
   if (!v) return null;
   const s = String(v);
-  const idx = s.indexOf(":");
+  const idx = s.indexOf(':');
   if (idx === -1) return null;
   const pack = s.slice(0, idx);
   const name = s.slice(idx + 1);
@@ -73,128 +77,128 @@ function parseIconValue(v?: string | null) {
 
 async function loadReactIcon(pack: string, name: string) {
   switch (pack) {
-    case "fa": {
-      const mod: any = await import("react-icons/fa");
+    case 'fa': {
+      const mod: any = await import('react-icons/fa');
       return mod?.[name] ?? null;
     }
-    case "fa6": {
-      const mod: any = await import("react-icons/fa6");
+    case 'fa6': {
+      const mod: any = await import('react-icons/fa6');
       return mod?.[name] ?? null;
     }
-    case "md": {
-      const mod: any = await import("react-icons/md");
+    case 'md': {
+      const mod: any = await import('react-icons/md');
       return mod?.[name] ?? null;
     }
-    case "io": {
-      const mod: any = await import("react-icons/io");
+    case 'io': {
+      const mod: any = await import('react-icons/io');
       return mod?.[name] ?? null;
     }
-    case "io5": {
-      const mod: any = await import("react-icons/io5");
+    case 'io5': {
+      const mod: any = await import('react-icons/io5');
       return mod?.[name] ?? null;
     }
-    case "fi": {
-      const mod: any = await import("react-icons/fi");
+    case 'fi': {
+      const mod: any = await import('react-icons/fi');
       return mod?.[name] ?? null;
     }
-    case "hi": {
-      const mod: any = await import("react-icons/hi");
+    case 'hi': {
+      const mod: any = await import('react-icons/hi');
       return mod?.[name] ?? null;
     }
-    case "hi2": {
-      const mod: any = await import("react-icons/hi2");
+    case 'hi2': {
+      const mod: any = await import('react-icons/hi2');
       return mod?.[name] ?? null;
     }
-    case "ri": {
-      const mod: any = await import("react-icons/ri");
+    case 'ri': {
+      const mod: any = await import('react-icons/ri');
       return mod?.[name] ?? null;
     }
-    case "bs": {
-      const mod: any = await import("react-icons/bs");
+    case 'bs': {
+      const mod: any = await import('react-icons/bs');
       return mod?.[name] ?? null;
     }
-    case "tb": {
-      const mod: any = await import("react-icons/tb");
+    case 'tb': {
+      const mod: any = await import('react-icons/tb');
       return mod?.[name] ?? null;
     }
-    case "si": {
-      const mod: any = await import("react-icons/si");
+    case 'si': {
+      const mod: any = await import('react-icons/si');
       return mod?.[name] ?? null;
     }
-    case "bi": {
-      const mod: any = await import("react-icons/bi");
+    case 'bi': {
+      const mod: any = await import('react-icons/bi');
       return mod?.[name] ?? null;
     }
-    case "cg": {
-      const mod: any = await import("react-icons/cg");
+    case 'cg': {
+      const mod: any = await import('react-icons/cg');
       return mod?.[name] ?? null;
     }
-    case "ci": {
-      const mod: any = await import("react-icons/ci");
+    case 'ci': {
+      const mod: any = await import('react-icons/ci');
       return mod?.[name] ?? null;
     }
-    case "di": {
-      const mod: any = await import("react-icons/di");
+    case 'di': {
+      const mod: any = await import('react-icons/di');
       return mod?.[name] ?? null;
     }
-    case "gi": {
-      const mod: any = await import("react-icons/gi");
+    case 'gi': {
+      const mod: any = await import('react-icons/gi');
       return mod?.[name] ?? null;
     }
-    case "go": {
-      const mod: any = await import("react-icons/go");
+    case 'go': {
+      const mod: any = await import('react-icons/go');
       return mod?.[name] ?? null;
     }
-    case "gr": {
-      const mod: any = await import("react-icons/gr");
+    case 'gr': {
+      const mod: any = await import('react-icons/gr');
       return mod?.[name] ?? null;
     }
-    case "im": {
-      const mod: any = await import("react-icons/im");
+    case 'im': {
+      const mod: any = await import('react-icons/im');
       return mod?.[name] ?? null;
     }
-    case "lia": {
-      const mod: any = await import("react-icons/lia");
+    case 'lia': {
+      const mod: any = await import('react-icons/lia');
       return mod?.[name] ?? null;
     }
-    case "lu": {
-      const mod: any = await import("react-icons/lu");
+    case 'lu': {
+      const mod: any = await import('react-icons/lu');
       return mod?.[name] ?? null;
     }
-    case "pi": {
-      const mod: any = await import("react-icons/pi");
+    case 'pi': {
+      const mod: any = await import('react-icons/pi');
       return mod?.[name] ?? null;
     }
-    case "rx": {
-      const mod: any = await import("react-icons/rx");
+    case 'rx': {
+      const mod: any = await import('react-icons/rx');
       return mod?.[name] ?? null;
     }
-    case "sl": {
-      const mod: any = await import("react-icons/sl");
+    case 'sl': {
+      const mod: any = await import('react-icons/sl');
       return mod?.[name] ?? null;
     }
-    case "tfi": {
-      const mod: any = await import("react-icons/tfi");
+    case 'tfi': {
+      const mod: any = await import('react-icons/tfi');
       return mod?.[name] ?? null;
     }
-    case "ti": {
-      const mod: any = await import("react-icons/ti");
+    case 'ti': {
+      const mod: any = await import('react-icons/ti');
       return mod?.[name] ?? null;
     }
-    case "vsc": {
-      const mod: any = await import("react-icons/vsc");
+    case 'vsc': {
+      const mod: any = await import('react-icons/vsc');
       return mod?.[name] ?? null;
     }
-    case "wi": {
-      const mod: any = await import("react-icons/wi");
+    case 'wi': {
+      const mod: any = await import('react-icons/wi');
       return mod?.[name] ?? null;
     }
-    case "ai": {
-      const mod: any = await import("react-icons/ai");
+    case 'ai': {
+      const mod: any = await import('react-icons/ai');
       return mod?.[name] ?? null;
     }
-    case "fc": {
-      const mod: any = await import("react-icons/fc");
+    case 'fc': {
+      const mod: any = await import('react-icons/fc');
       return mod?.[name] ?? null;
     }
     default:
@@ -211,7 +215,7 @@ function ReactIcon({
   className?: string;
   size?: number;
 }) {
-  const parsed = useMemo(() => parseIconValue(value || ""), [value]);
+  const parsed = useMemo(() => parseIconValue(value || ''), [value]);
   const Comp = React.useRef<React.ComponentType<any> | null>(null);
   const [, force] = React.useState(0);
 
@@ -273,7 +277,7 @@ function FieldShell({
           className="leading-[18.48px]"
           style={{
             color:
-              "color-mix(in oklab, var(--ds-on-surface, var(--ds-on-bg)) 70%, transparent)",
+              'color-mix(in oklab, var(--ds-on-surface, var(--ds-on-bg)) 70%, transparent)',
           }}
         >
           {label}
@@ -284,7 +288,7 @@ function FieldShell({
   );
 }
 
-type SendState = "idle" | "sending" | "sent" | "error";
+type SendState = 'idle' | 'sending' | 'sent' | 'error';
 
 function CtaBannerRenderer({ block, theme }: CtaBannerRendererProps) {
   const d: any = block.data || {};
@@ -301,7 +305,8 @@ function CtaBannerRenderer({ block, theme }: CtaBannerRendererProps) {
     name: d.form?.name ?? CTA_BANNER_DEFAULT_DATA.form.name,
     email: d.form?.email ?? CTA_BANNER_DEFAULT_DATA.form.email,
     message: d.form?.message ?? CTA_BANNER_DEFAULT_DATA.form.message,
-    buttonLabel: d.form?.buttonLabel ?? CTA_BANNER_DEFAULT_DATA.form.buttonLabel,
+    buttonLabel:
+      d.form?.buttonLabel ?? CTA_BANNER_DEFAULT_DATA.form.buttonLabel,
   };
 
   const resolvedTheme = theme ?? mapThemeJson(null);
@@ -310,31 +315,31 @@ function CtaBannerRenderer({ block, theme }: CtaBannerRendererProps) {
   const params = useParams() as any;
   const projectId: string | undefined = params?.projectId;
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [message, setMessage] = useState('');
 
-  const [sendState, setSendState] = useState<SendState>("idle");
+  const [sendState, setSendState] = useState<SendState>('idle');
 
-  const isBusy = sendState === "sending";
+  const isBusy = sendState === 'sending';
   const canSend =
     !!name.trim() && !!email.trim() && !!message.trim() && !isBusy;
 
   const buttonText = useMemo(() => {
-    if (sendState === "sending") return "Sending…";
-    if (sendState === "sent") return "Sent ✓";
-    if (sendState === "error") return "Error — try again";
-    return form.buttonLabel || "Send message";
+    if (sendState === 'sending') return 'Sending…';
+    if (sendState === 'sent') return 'Sent ✓';
+    if (sendState === 'error') return 'Error — try again';
+    return form.buttonLabel || 'Send message';
   }, [sendState, form.buttonLabel]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!canSend) {
-      setSendState("error");
+      setSendState('error');
       return;
     }
 
-    setSendState("sending");
+    setSendState('sending');
 
     try {
       const payload: any = {
@@ -346,31 +351,31 @@ function CtaBannerRenderer({ block, theme }: CtaBannerRendererProps) {
       // Builder mode: pass projectId so API can resolve owner email
       if (projectId) payload.projectId = projectId;
 
-      const res = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
       const json = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        console.error("Contact send failed:", res.status, json);
-        setSendState("error");
+        console.error('Contact send failed:', res.status, json);
+        setSendState('error');
         return;
       }
 
-      setSendState("sent");
-      setName("");
-      setEmail("");
-      setMessage("");
+      setSendState('sent');
+      setName('');
+      setEmail('');
+      setMessage('');
 
       // revert state back after a bit
-      window.setTimeout(() => setSendState("idle"), 2400);
+      window.setTimeout(() => setSendState('idle'), 2400);
     } catch (err) {
-      console.error("Contact send error:", err);
-      setSendState("error");
-      window.setTimeout(() => setSendState("idle"), 2400);
+      console.error('Contact send error:', err);
+      setSendState('error');
+      window.setTimeout(() => setSendState('idle'), 2400);
     }
   }
 
@@ -378,20 +383,25 @@ function CtaBannerRenderer({ block, theme }: CtaBannerRendererProps) {
     <SectionShell theme={resolvedTheme}>
       <div className="mx-auto w-full">
         {/* INVERT CARD: surface + onSurface */}
-        <div
+        <CinematicBlurUp
+          amount={0.22}
+          margin="-120px"
+          y={10}
+          blur={18}
+          duration={1.05}
+          delay={0.06}
           className={[
-            "w-full overflow-hidden",
-            "rounded-[calc(var(--ds-radius,16px))]",
-            "px-6 py-8 md:px-10 md:py-10 lg:pr-16 lg:pl-10 lg:py-10",
-            "flex flex-col gap-10 md:flex-row md:items-center md:gap-20",
-          ].join(" ")}
-          style={{
-            background: "var(--ds-surface)",
-            color: "var(--ds-on-surface)",
-            outline:
-              "1px solid color-mix(in oklab, var(--ds-on-surface) 14%, transparent)",
-            outlineOffset: "-1px",
-          }}
+            'w-full overflow-hidden',
+            'rounded-[calc(var(--ds-radius,16px))]',
+            'px-6 py-8 md:px-10 md:py-10 lg:pr-16 lg:pl-10 lg:py-10',
+            'flex flex-col gap-10 md:flex-row md:items-center md:gap-20',
+
+            // ✅ DS in Tailwind (no inline style)
+            'bg-[var(--ds-surface)]',
+            'text-[var(--ds-on-surface)]',
+            'outline outline-1 outline-[color-mix(in_oklab,var(--ds-on-surface)_14%,transparent)]',
+            '-outline-offset-1',
+          ].join(' ')}
         >
           {/* Left */}
           <div className="flex-1">
@@ -400,7 +410,7 @@ function CtaBannerRenderer({ block, theme }: CtaBannerRendererProps) {
                 <Heading
                   level="h2"
                   weight="medium"
-                  style={{ color: "var(--ds-on-surface)" }}
+                  style={{ color: 'var(--ds-on-surface)' }}
                 >
                   {heading}
                 </Heading>
@@ -412,7 +422,7 @@ function CtaBannerRenderer({ block, theme }: CtaBannerRendererProps) {
                     className="max-w-[480px]"
                     style={{
                       color:
-                        "color-mix(in oklab, var(--ds-on-surface) 70%, transparent)",
+                        'color-mix(in oklab, var(--ds-on-surface) 70%, transparent)',
                     }}
                   >
                     {subheading}
@@ -423,17 +433,17 @@ function CtaBannerRenderer({ block, theme }: CtaBannerRendererProps) {
               {Array.isArray(socials) && socials.length > 0 && (
                 <div className="flex flex-wrap items-center gap-6">
                   {socials.map((s, i) => {
-                    const href = s.href || "#";
-                    const label = s.label || "Social link";
+                    const href = s.href || '#';
+                    const label = s.label || 'Social link';
                     return (
                       <a
-                        key={`${s.icon || "icon"}-${i}`}
+                        key={`${s.icon || 'icon'}-${i}`}
                         href={href}
                         aria-label={label}
                         target="_blank"
                         rel="noreferrer noopener"
                         className="inline-flex h-8 w-8 items-center justify-center"
-                        style={{ color: "var(--ds-on-surface)" }}
+                        style={{ color: 'var(--ds-on-surface)' }}
                       >
                         <ReactIcon
                           value={s.icon}
@@ -452,90 +462,90 @@ function CtaBannerRenderer({ block, theme }: CtaBannerRendererProps) {
           <div className="w-full md:w-[432px] md:max-w-[440px]">
             <form onSubmit={handleSubmit} className="flex flex-col gap-6">
               <div className="flex flex-col gap-4">
-                <FieldShell label={form.name?.label || "Name"}>
+                <FieldShell label={form.name?.label || 'Name'}>
                   <input
-                    aria-label={form.name?.label || "Name"}
-                    placeholder={form.name?.placeholder || ""}
+                    aria-label={form.name?.label || 'Name'}
+                    placeholder={form.name?.placeholder || ''}
                     className={[
-                      "w-full",
-                      "rounded-[calc(var(--ds-radius,16px))]",
-                      "px-4 py-3",
-                      "text-[18px] leading-[27px] font-light",
-                      "outline-none",
-                    ].join(" ")}
+                      'w-full',
+                      'rounded-[calc(var(--ds-radius,16px))]',
+                      'px-4 py-3',
+                      'text-[18px] leading-[27px] font-light',
+                      'outline-none',
+                    ].join(' ')}
                     style={{
                       background:
-                        "color-mix(in oklab, var(--ds-bg) 5%, var(--ds-surface) 8%)",
+                        'color-mix(in oklab, var(--ds-bg) 5%, var(--ds-surface) 8%)',
                       color:
-                        "color-mix(in oklab, var(--ds-on-surface) 72%, transparent)",
+                        'color-mix(in oklab, var(--ds-on-surface) 72%, transparent)',
                       outline:
-                        "1px solid color-mix(in oklab, var(--ds-on-surface) 10%, transparent)",
-                      outlineOffset: "-1px",
+                        '1px solid color-mix(in oklab, var(--ds-on-surface) 10%, transparent)',
+                      outlineOffset: '-1px',
                     }}
                     value={name}
                     onChange={(e) => {
                       setName(e.target.value);
-                      if (sendState !== "idle") setSendState("idle");
+                      if (sendState !== 'idle') setSendState('idle');
                     }}
                     autoComplete="name"
                   />
                 </FieldShell>
 
-                <FieldShell label={form.email?.label || "Email"}>
+                <FieldShell label={form.email?.label || 'Email'}>
                   <input
-                    aria-label={form.email?.label || "Email"}
-                    placeholder={form.email?.placeholder || ""}
+                    aria-label={form.email?.label || 'Email'}
+                    placeholder={form.email?.placeholder || ''}
                     className={[
-                      "w-full",
-                      "rounded-[calc(var(--ds-radius,16px))]",
-                      "px-4 py-3",
-                      "text-[18px] leading-[27px] font-light",
-                      "outline-none",
-                    ].join(" ")}
+                      'w-full',
+                      'rounded-[calc(var(--ds-radius,16px))]',
+                      'px-4 py-3',
+                      'text-[18px] leading-[27px] font-light',
+                      'outline-none',
+                    ].join(' ')}
                     style={{
                       background:
-                        "color-mix(in oklab, var(--ds-bg) 5%, var(--ds-surface) 8%)",
+                        'color-mix(in oklab, var(--ds-bg) 5%, var(--ds-surface) 8%)',
                       color:
-                        "color-mix(in oklab, var(--ds-on-surface) 72%, transparent)",
+                        'color-mix(in oklab, var(--ds-on-surface) 72%, transparent)',
                       outline:
-                        "1px solid color-mix(in oklab, var(--ds-on-surface) 10%, transparent)",
-                      outlineOffset: "-1px",
+                        '1px solid color-mix(in oklab, var(--ds-on-surface) 10%, transparent)',
+                      outlineOffset: '-1px',
                     }}
                     value={email}
                     onChange={(e) => {
                       setEmail(e.target.value);
-                      if (sendState !== "idle") setSendState("idle");
+                      if (sendState !== 'idle') setSendState('idle');
                     }}
                     autoComplete="email"
                     inputMode="email"
                   />
                 </FieldShell>
 
-                <FieldShell label={form.message?.label || "Message"}>
+                <FieldShell label={form.message?.label || 'Message'}>
                   <textarea
-                    aria-label={form.message?.label || "Message"}
-                    placeholder={form.message?.placeholder || ""}
+                    aria-label={form.message?.label || 'Message'}
+                    placeholder={form.message?.placeholder || ''}
                     rows={4}
                     className={[
-                      "w-full resize-none",
-                      "rounded-[calc(var(--ds-radius,16px))]",
-                      "px-4 py-3",
-                      "text-[18px] leading-[27px] font-light",
-                      "outline-none",
-                    ].join(" ")}
+                      'w-full resize-none',
+                      'rounded-[calc(var(--ds-radius,16px))]',
+                      'px-4 py-3',
+                      'text-[18px] leading-[27px] font-light',
+                      'outline-none',
+                    ].join(' ')}
                     style={{
                       background:
-                        "color-mix(in oklab, var(--ds-bg) 5%, var(--ds-surface) 8%)",
+                        'color-mix(in oklab, var(--ds-bg) 5%, var(--ds-surface) 8%)',
                       color:
-                        "color-mix(in oklab, var(--ds-on-surface) 72%, transparent)",
+                        'color-mix(in oklab, var(--ds-on-surface) 72%, transparent)',
                       outline:
-                        "1px solid color-mix(in oklab, var(--ds-on-surface) 10%, transparent)",
-                      outlineOffset: "-1px",
+                        '1px solid color-mix(in oklab, var(--ds-on-surface) 10%, transparent)',
+                      outlineOffset: '-1px',
                     }}
                     value={message}
                     onChange={(e) => {
                       setMessage(e.target.value);
-                      if (sendState !== "idle") setSendState("idle");
+                      if (sendState !== 'idle') setSendState('idle');
                     }}
                   />
                 </FieldShell>
@@ -546,15 +556,15 @@ function CtaBannerRenderer({ block, theme }: CtaBannerRendererProps) {
                 whileTap={{ scale: isBusy ? 1 : 0.99 }}
                 disabled={!canSend}
                 className={[
-                  "h-12 w-full",
-                  "rounded-[calc(var(--ds-radius,16px))]",
-                  "px-8 py-2",
-                  "text-[18px] leading-[27px] font-medium tracking-[-0.01em]",
-                  !canSend ? "opacity-80 cursor-not-allowed" : "",
-                ].join(" ")}
+                  'h-12 w-full',
+                  'rounded-[calc(var(--ds-radius,16px))]',
+                  'px-8 py-2',
+                  'text-[18px] leading-[27px] font-medium tracking-[-0.01em]',
+                  !canSend ? 'opacity-80 cursor-not-allowed' : '',
+                ].join(' ')}
                 style={{
-                  background: "var(--ds-on-surface)",
-                  color: "var(--ds-surface)",
+                  background: 'var(--ds-on-surface)',
+                  color: 'var(--ds-surface)',
                 }}
                 aria-live="polite"
               >
@@ -562,7 +572,7 @@ function CtaBannerRenderer({ block, theme }: CtaBannerRendererProps) {
               </motion.button>
             </form>
           </div>
-        </div>
+        </CinematicBlurUp>
       </div>
     </SectionShell>
   );
@@ -574,29 +584,29 @@ function CtaBannerRenderer({ block, theme }: CtaBannerRendererProps) {
 
 export const CTA_BANNER_SCHEMA = [
   {
-    type: "group",
-    label: "Nastavení sekce",
+    type: 'group',
+    label: 'Nastavení sekce',
     children: [
       {
-        type: "theme",
-        path: "theme",
-        label: "Design systém sekce",
+        type: 'theme',
+        path: 'theme',
+        label: 'Design systém sekce',
         help:
           "Tahle sekce je 'invert' – karta používá ds-surface/ds-on-surface. " +
-          "Pro bílý banner na tmavé stránce nastav surface světlé a bg tmavé.",
+          'Pro bílý banner na tmavé stránce nastav surface světlé a bg tmavé.',
       },
       {
-        type: "text",
-        path: "heading",
-        label: "Nadpis",
+        type: 'text',
+        path: 'heading',
+        label: 'Nadpis',
         rows: 2,
         multiline: true,
         maxLength: 120,
       },
       {
-        type: "text",
-        path: "subheading",
-        label: "Podnadpis",
+        type: 'text',
+        path: 'subheading',
+        label: 'Podnadpis',
         rows: 4,
         multiline: true,
         maxLength: 320,
@@ -604,101 +614,101 @@ export const CTA_BANNER_SCHEMA = [
     ],
   },
   {
-    type: "repeater",
-    label: "Ikony / odkazy",
-    path: "socials",
-    emptyHint: "Přidej první ikonu",
+    type: 'repeater',
+    label: 'Ikony / odkazy',
+    path: 'socials',
+    emptyHint: 'Přidej první ikonu',
     itemFactory: () => ({
-      icon: "md:MdOutlineLanguage",
-      href: "#",
-      label: "Website",
+      icon: 'md:MdOutlineLanguage',
+      href: '#',
+      label: 'Website',
     }),
     children: [
       {
-        type: "icon",
-        path: "icon",
-        label: "Ikona",
-        placeholder: "Select icon…",
+        type: 'icon',
+        path: 'icon',
+        label: 'Ikona',
+        placeholder: 'Select icon…',
         help: 'Ukládá se jako "pack:Name" (např. md:MdHome).',
       },
       {
-        type: "text",
-        path: "label",
-        label: "Popisek (a11y)",
-        placeholder: "Website / Email / Instagram…",
+        type: 'text',
+        path: 'label',
+        label: 'Popisek (a11y)',
+        placeholder: 'Website / Email / Instagram…',
         maxLength: 40,
       },
       {
-        type: "link",
-        path: "href",
-        label: "URL",
-        placeholder: "https://…",
+        type: 'link',
+        path: 'href',
+        label: 'URL',
+        placeholder: 'https://…',
       },
     ],
   },
   {
-    type: "group",
-    label: "Formulář",
+    type: 'group',
+    label: 'Formulář',
     children: [
       {
-        type: "group",
-        label: "Name",
+        type: 'group',
+        label: 'Name',
         children: [
           {
-            type: "text",
-            path: "form.name.label",
-            label: "Label",
+            type: 'text',
+            path: 'form.name.label',
+            label: 'Label',
             maxLength: 24,
           },
           {
-            type: "text",
-            path: "form.name.placeholder",
-            label: "Placeholder",
+            type: 'text',
+            path: 'form.name.placeholder',
+            label: 'Placeholder',
             maxLength: 60,
           },
         ],
       },
       {
-        type: "group",
-        label: "Email",
+        type: 'group',
+        label: 'Email',
         children: [
           {
-            type: "text",
-            path: "form.email.label",
-            label: "Label",
+            type: 'text',
+            path: 'form.email.label',
+            label: 'Label',
             maxLength: 24,
           },
           {
-            type: "text",
-            path: "form.email.placeholder",
-            label: "Placeholder",
+            type: 'text',
+            path: 'form.email.placeholder',
+            label: 'Placeholder',
             maxLength: 60,
           },
         ],
       },
       {
-        type: "group",
-        label: "Message",
+        type: 'group',
+        label: 'Message',
         children: [
           {
-            type: "text",
-            path: "form.message.label",
-            label: "Label",
+            type: 'text',
+            path: 'form.message.label',
+            label: 'Label',
             maxLength: 24,
           },
           {
-            type: "text",
-            path: "form.message.placeholder",
-            label: "Placeholder",
+            type: 'text',
+            path: 'form.message.placeholder',
+            label: 'Placeholder',
             maxLength: 80,
           },
         ],
       },
       {
-        type: "text",
-        path: "form.buttonLabel",
-        label: "Text tlačítka",
-        placeholder: "Send message",
+        type: 'text',
+        path: 'form.buttonLabel',
+        label: 'Text tlačítka',
+        placeholder: 'Send message',
         maxLength: 32,
       },
     ],
@@ -722,22 +732,22 @@ function CtaBannerEditor() {
 ========================= */
 
 const ct001: SectionModule = {
-  id: "ct001",
+  id: 'ct001',
   definition: {
-    type: "cta-banner",
-    title: "CTA banner – invert form",
+    type: 'cta-banner',
+    title: 'CTA banner – invert form',
     version: 4,
     defaultData: CTA_BANNER_DEFAULT_DATA,
     Renderer: CtaBannerRenderer,
     editor: {
       schema: CTA_BANNER_SCHEMA,
-      title: "Upravit CTA banner",
-      modelPath: "data",
+      title: 'Upravit CTA banner',
+      modelPath: 'data',
     },
   },
   Editor: CtaBannerEditor,
   meta: {
-    category: "cta",
+    category: 'cta',
     previewImage: PreviewImage,
   },
 };

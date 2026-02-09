@@ -9,6 +9,12 @@ import { mapThemeJson } from "@/lib/design-system";
 import { SectionShell } from "@/sections/ui/SectionShell";
 import PreviewImage from "../../previews/ga001.png";
 
+import {
+  CinematicBlurUp,
+  CinematicFade,
+  CinematicSplitWords,
+} from '../../motion/cinematic';
+
 /* =========================================================
    Default data
 ========================================================= */
@@ -70,8 +76,14 @@ function GalleryGridRenderer({ block, theme }: GalleryGridRendererProps) {
         <div className="mx-auto w-full max-w-[1280px]">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-10">
             {items.map((it, i) => (
-              <div
+              <CinematicBlurUp
                 key={i}
+                amount={0.22}
+                margin="-120px"
+                y={10}
+                blur={18}
+                duration={1.05}
+                delay={i * 0.06}
                 className={[
                   "relative w-full overflow-hidden rounded-[16px]",
                   // mobile: vždy 1 sloupec
@@ -86,7 +98,7 @@ function GalleryGridRenderer({ block, theme }: GalleryGridRendererProps) {
                   className="h-[480px] w-full object-cover"
                   draggable={false}
                 />
-              </div>
+              </CinematicBlurUp>
             ))}
           </div>
         </div>

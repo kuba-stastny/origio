@@ -8,6 +8,7 @@ import { useAutogen } from "./useAutogen";
 import OnboardingTemplateStep, {
   TEMPLATE_PRESETS,
   type ThemeKey,
+  type PresetGroup,
 } from "@/components/builder/OnboardingTemplateStep";
 import { supabase } from "@/lib/supabase/client";
 
@@ -90,10 +91,10 @@ function Chip({
       onClick={onClick}
       {...tapPop}
       className={cx(
-        "h-12 rounded-xl text-[16px] px-6 leading-none transition border",
+        "h-12 rounded-xl text-[16px] px-6 leading-none backdrop-blur-2xl transition border",
         selected
-          ? "bg-[#27272A] text-white border-white"
-          : "bg-[#18181B] text-[#A1A1AA] border-zinc-800 hover:bg-[#27272A] hover:text-[#FAFAFA]"
+          ? "bg-zinc-900 text-white border-zinc-400"
+          : "bg-zinc-900/40 text-[#A1A1AA] border-zinc-800 hover:bg-zinc-900/60 hover:text-[#FAFAFA]"
       )}
     >
       <span className="text-sm">{label}</span>
@@ -223,6 +224,60 @@ const fade = {
 const PRESET_MAP: Record<string, string[]> = Object.fromEntries(
   TEMPLATE_PRESETS.map((p) => [p.id, p.sections])
 );
+
+function resolveGroupFromPrimaryFocus(primaryFocus: string): PresetGroup {
+  const f = (primaryFocus || "").toLowerCase();
+
+  // IT / design / visual creators
+  if (
+    f.includes("it") ||
+    f.includes("vývoj") ||
+    f.includes("vyvoj") ||
+    f.includes("design") ||
+    f.includes("grafika") ||
+    f.includes("video") ||
+    f.includes("foto") ||
+    f.includes("fitness")
+  ) {
+    return "it_design";
+  }
+
+  // Marketing / growth / copy / consulting
+  if (
+    f.includes("marketing") ||
+    f.includes("růst") ||
+    f.includes("rust") ||
+    f.includes("copy") ||
+    f.includes("poraden")
+  ) {
+    return "marketing";
+  }
+
+  // Finance / admin / real estate / education
+  if (
+    f.includes("finance") ||
+    f.includes("nemovit") ||
+    f.includes("administr") ||
+    f.includes("vzděl") ||
+    f.includes("vzdel")
+  ) {
+    return "finance";
+  }
+
+  return "it_design";
+}
+
+function getRecommendedPreset(primaryFocus: string) {
+  const group = resolveGroupFromPrimaryFocus(primaryFocus);
+
+  // prefer blacky variant as default pick for onboarding (premium dark)
+  const p =
+    TEMPLATE_PRESETS.find((x) => x.group === group && x.themeKey === "blacky") ??
+    TEMPLATE_PRESETS.find((x) => x.group === group) ??
+    TEMPLATE_PRESETS[0];
+
+  return p;
+}
 
 export default function BuilderOnboarding({
   brandName = "origio",
@@ -391,6 +446,16 @@ export default function BuilderOnboarding({
 
   function goNext() {
     if (!canContinue) return;
+
+    // ✅ entering Step 5 → auto-pick recommended template based on primaryFocus
+    if (step === 4) {
+      const rec = getRecommendedPreset(payload.primaryFocus);
+      setTemplateId(rec?.id ?? "t001");
+      setThemeKey(rec?.themeKey ?? "blacky");
+      setStep(5);
+      return;
+    }
+
     if (step < 5) setStep((s) => (s + 1) as Step);
   }
 
@@ -489,12 +554,7 @@ export default function BuilderOnboarding({
                         Odpověz na pár otázek, ať můžeme připravit stránku, která ti bude vydělávat.
                       </div>
 
-                      {/* ✅ optional: friendly hint showing loaded name */}
-                      {payload.name ? (
-                        <div className="mt-3 text-sm text-zinc-400">
-                          Připravujeme web pro <span className="text-zinc-200 font-medium">{payload.name}</span>
-                        </div>
-                      ) : null}
+                 
                     </div>
 
                     <div className="flex flex-col gap-12">
@@ -627,7 +687,10 @@ export default function BuilderOnboarding({
                           placeholder="Např. klient po spuštění nového webu začal dostávat o 120% více poptávek na automat a investice se mu vrátila za 1 měsíc"
                           rows={4}
                         />
-                        <Hint>Pokud chceš, popiš konkrétní situaci, své unikátní vlastnosti nebo způsoby, které tví klienti oceňují</Hint>
+                        <Hint>
+                          Pokud chceš, popiš konkrétní situaci, své unikátní vlastnosti nebo způsoby, které tví klienti
+                          oceňují
+                        </Hint>
                       </div>
                     </div>
                   </div>
